@@ -25,10 +25,17 @@ void ApplyFunction(Iterator begin, Iterator end, Func func, Args... args) {
         func(*iter, args...);
 }
 
-// Iterator Level #3
+// // Iterator Level #3
+// template <typename Container, typename Func, typename... Args>
+// void ApplyFunction(Container &container, Func func, Args... args) {
+//     ::ApplyFunction(container.begin(), container.end(), func, args...);
+// }
+
+// Iterator Level #4
 template <typename Container, typename Func, typename... Args>
 void ApplyFunction(Container &container, Func func, Args... args) {
-    ::ApplyFunction(container.begin(), container.end(), func, args...);
+    for (auto iter : container)
+        func(*iter, args...);
 }
 
 #endif // __FOREACH_H__
