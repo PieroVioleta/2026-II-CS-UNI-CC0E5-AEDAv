@@ -34,8 +34,8 @@ void ApplyFunction(Iterator begin, Iterator end, Func func, Args... args) {
 // Iterator Level #4
 template <typename Container, typename Func, typename... Args>
 void ApplyFunction(Container &container, Func func, Args... args) {
-    for (auto iter : container)
-        func(*iter, args...);
+    for (auto &v : container)
+        func(v, args...);
 }
 
 #endif // __FOREACH_H__
