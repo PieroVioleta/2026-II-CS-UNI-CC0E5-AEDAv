@@ -7,34 +7,43 @@
 using namespace std;
 
 template <typename T>
-class VectorForwardIterator{
-    using value_type        = T;
-    // using iterator_category = std::forward_iterator_tag;
-    // using difference_type   = std::ptrdiff_t;
-    // using pointer           = value_type *;
-    // using reference         = value_type&;
-private:
-    value_type* m_ptr;
+class GeneralIterator {
 public:
-    VectorForwardIterator(value_type *ptr) : m_ptr(ptr) {}
-
+    using value_type        = T;
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = value_type *;
+    using reference         = value_type&;
+protected:
+    pointer m_ptr;
+public:
+    GeneralIterator(pointer ptr) : m_ptr(ptr) {}
+    reference operator*()   const { return *m_ptr; }
     value_type& operator*() const { return *m_ptr; }
     // value_type* operator->()      { return m_ptr; }
+    // friend bool operator== (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr == b.m_ptr; };
+    friend bool operator!= (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr != b.m_ptr; };
+};
+template <typename T>
+class VectorForwardIterator : public GeneralIterator<T> {
+    using value_type        = T;
+public:
+    using GeneralIterator<T>::GeneralIterator; // Inherit constructor
 
     // Prefix increment
     VectorForwardIterator& operator++() { ++m_ptr; return *this; }  
-
-    // Postfix increment
-    // VectorForwardIterator operator++(int) { VectorForwardIterator tmp = *this; ++(*this); return tmp; }
-
-    friend bool operator== (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr == b.m_ptr; };
-    friend bool operator!= (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr != b.m_ptr; };
 };
 
 template <typename T>
-class Vector {
+struct VectorAscTraits {
     using value_type        = T;
     using ForwardIterator   = VectorForwardIterator<T>;
+};
+
+template <typename Traits>
+class Vector {
+    using value_type        = Traits::value_type;
+    using ForwardIterator   = Traits::ForwardIterator;
 private:
     value_type  *m_data;   // puntero al arreglo dinámico
     size_t  m_size,        // cantidad actual

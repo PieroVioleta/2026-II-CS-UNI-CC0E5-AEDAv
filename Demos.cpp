@@ -21,7 +21,7 @@ void Square(TX &value) {
 }
 
 void DemoVector() {
-    Vector<TX> vec;
+    Vector<VectorAscTraits<TX>> vec;
     for (TX i = 0; i < 10; ++i) {
         vec.push_back(i);
     }
@@ -37,12 +37,12 @@ void DemoVector() {
     cout << "Vector using cout directly: ";
     cout << vec << endl;
 
-    ::ApplyFunction(vec, AddOne);
+    ::ApplyFunction(vec, AddOne); 
     // vec.ApplyFunction(AddOne);
     cout << "Vector after applying AddOne function: ";
     cout << vec << endl;
 
-    ::ApplyFunction(vec, AddX<TX>, 5);
+    ::ApplyFunction(vec, AddX<TX>, 7);
     //vec.ApplyFunction(AddX<TX>, 5);
     cout << "Vector after applying lambda function (Add 5): ";
     cout << vec << endl;
@@ -52,14 +52,14 @@ void DemoVector() {
     cout << "Vector after applying Square function: ";
     cout << vec << endl;
 
-    Vector<string> strVec;
+    Vector<VectorAscTraits<string>> strVec;
     strVec.push_back("Hello");
     strVec.push_back("World");
 
     cout << "VectorStr: ";
     cout << strVec << endl;
 
-    ::ApplyFunction(strVec, AddX<string>, "!-");
+    ::ApplyFunction(strVec, AddX<string>, "!-X");
     // strVec.ApplyFunction(AddX<string>, "!");
     cout << "VectorStr after applying lambda function (Add !): ";
     cout << strVec << endl;
