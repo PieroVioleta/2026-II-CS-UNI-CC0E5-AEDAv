@@ -7,15 +7,42 @@
 using namespace std;
 
 template <typename T>
-class Vector {
+class VectorForwardIterator{
+    using value_type        = T;
+    // using iterator_category = std::forward_iterator_tag;
+    // using difference_type   = std::ptrdiff_t;
+    // using pointer           = value_type *;
+    // using reference         = value_type&;
 private:
-    T  *    m_data;        // puntero al arreglo dinámico
+    value_type* m_ptr;
+public:
+    VectorForwardIterator(value_type *ptr) : m_ptr(ptr) {}
+
+    value_type& operator*() const { return *m_ptr; }
+    // value_type* operator->()      { return m_ptr; }
+
+    // Prefix increment
+    VectorForwardIterator& operator++() { ++m_ptr; return *this; }  
+
+    // Postfix increment
+    // VectorForwardIterator operator++(int) { VectorForwardIterator tmp = *this; ++(*this); return tmp; }
+
+    friend bool operator== (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr == b.m_ptr; };
+    friend bool operator!= (const VectorForwardIterator& a, const VectorForwardIterator& b) { return a.m_ptr != b.m_ptr; };
+};
+
+template <typename T>
+class Vector {
+    using value_type        = T;
+    using ForwardIterator   = VectorForwardIterator<T>;
+private:
+    value_type  *m_data;   // puntero al arreglo dinámico
     size_t  m_size,        // cantidad actual
             m_capacity;    // capacidad
 
     void reserve(size_t new_cap) {
         if (new_cap <= m_capacity) return;
-        T* new_data = new T[new_cap];
+        value_type* new_data = new value_type[new_cap];
         for (size_t i = 0; i < m_size; ++i) {
             new_data[i] = m_data[i];
         }
@@ -61,7 +88,7 @@ public:
         std::swap(m_capacity, other.m_capacity);
     }
 
-    void push_back(const T& value) {
+    void push_back(const value_type& value) {
         if (m_size == m_capacity) {
             size_t new_cap = (m_capacity == 0) ? 1 : m_capacity * 2;
             reserve(new_cap);
@@ -76,22 +103,22 @@ public:
         }
     }
 
-    T& operator[](size_t index) {
+    value_type& operator[](size_t index) {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
 
-    const T& operator[](size_t index) const {
+    const value_type& operator[](size_t index) const {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
 
-    T& at(size_t index) {
+    value_type& at(size_t index) {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
 
-    const T& at(size_t index) const {
+    const value_type& at(size_t index) const {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
@@ -102,13 +129,13 @@ public:
 
     void clear() {
         for (size_t i = 0; i < m_size; ++i) {
-            // m_data[i].~T();
+            // m_data[i].~value_type();
         }
         m_size = 0;
     }
 
-    T* begin() { return m_data; }
-    T* end()   { return m_data + m_size; }
+    ForwardIterator begin() { return ForwardIterator(m_data); }
+    ForwardIterator end()   { return ForwardIterator(m_data + m_size); }
 
     // Persistencia
     ostream &write(ostream &os){
