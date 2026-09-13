@@ -29,15 +29,15 @@ class VectorForwardIterator : public GeneralIterator<T> {
     using value_type        = T;
 public:
     using GeneralIterator<T>::GeneralIterator; // Inherit constructor
-
+ 
     // Prefix increment
-    VectorForwardIterator& operator++() { ++m_ptr; return *this; }  
+    VectorForwardIterator& operator++() { ++GeneralIterator<T>::m_ptr; return *this; }  
 };
 
 template <typename T>
 struct VectorAscTraits {
     using value_type        = T;
-    using ForwardIterator   = VectorForwardIterator<T>;
+    using ForwardIterator   = VectorForwardIterator<value_type>;
 };
 
 template <typename Traits>
