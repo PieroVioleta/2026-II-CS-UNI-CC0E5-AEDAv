@@ -24,6 +24,7 @@ struct VectorAscTraits {
 
 template <typename Traits>
 class Vector {
+public:
     using value_type        = Traits::value_type;
     using ForwardIterator   = Traits::ForwardIterator;
 private:
@@ -72,7 +73,7 @@ public:
 
     void push_back(const value_type& value) {
         if (m_size == m_capacity) {
-            size_t new_cap = (m_capacity == 0) ? 1 : m_capacity * 2;
+            size_t new_cap = (m_capacity == 0) ? 10 : m_capacity * 2;
             resize(new_cap);
         }
         m_data[m_size] = value;

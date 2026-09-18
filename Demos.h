@@ -3,5 +3,6 @@
 
 #include "types.h"
 void DemoVector();
+void DemoRaceCondition();
 
 #endif // __DEMOS_H__
