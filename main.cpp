@@ -4,9 +4,8 @@
 
 using namespace std;
 
-// g++ main.cpp -o main
-// para ejecutar: ./main
-// g++ -std=c++23 main.cpp Demos.cpp -o main
+// Compilar asi: make
+// Ejecutar asi: ./main
 int main() {
     DemoVector();
     return 0;

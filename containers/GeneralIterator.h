@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <algorithm> // para std::swap
 
+// CRTP
 template <typename Derived, typename T>
 class GeneralIterator {
 public:
