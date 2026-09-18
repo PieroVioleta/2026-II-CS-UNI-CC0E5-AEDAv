@@ -3,12 +3,13 @@
 
 #include "GeneralIterator.h"
 using namespace std;
+
 template <typename T>
-class VectorForwardIterator : public GeneralIterator<VectorForwardIterator<T>> {
+class VectorForwardIterator : public GeneralIterator<VectorForwardIterator<T>, T> {
 public:
-    using value_type        = typename T;
+    using value_type        = T;
     using MySelf            = VectorForwardIterator<T>;
-    using Parent            = GeneralIterator<MySelf>;
+    using Parent            = GeneralIterator<MySelf, T>;
     using Parent::Parent; // Inherit constructor
  
     // Prefix increment

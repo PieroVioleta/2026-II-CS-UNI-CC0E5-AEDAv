@@ -5,23 +5,22 @@
 #include <stdexcept>
 #include <algorithm> // para std::swap
 
-template <typename Iterator>
+template <typename Derived, typename T>
 class GeneralIterator {
 public:
     using iterator_category = std::forward_iterator_tag;
     using difference_type   = std::ptrdiff_t;
-    using value_type        = typename Iterator::value_type;
+    using value_type        = T;
     using pointer           = value_type *;
     using reference         = value_type&;
 protected:
     pointer m_ptr;
 public:
     GeneralIterator(pointer ptr) : m_ptr(ptr) {}
-    // reference   operator*()   const { return *m_ptr; }
     value_type& operator*() const { return *m_ptr; }
     // value_type* operator->()      { return m_ptr; }
-    // friend bool operator== (const GeneralIterator& a, const GeneralIterator& b) { return a.m_ptr == b.m_ptr; };
-    friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };
+    friend bool operator== (const Derived& a, const Derived& b) { return a.m_ptr == b.m_ptr; };
+    friend bool operator!= (const Derived& a, const Derived& b) { return a.m_ptr != b.m_ptr; };
 };
 
 #endif // __GENERAL_ITERATOR_H__
