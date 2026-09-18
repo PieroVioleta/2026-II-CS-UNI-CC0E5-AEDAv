@@ -3,14 +3,13 @@
 
 #include "GeneralIterator.h"
 using namespace std;
-
 template <typename T>
 class VectorForwardIterator : public GeneralIterator<VectorForwardIterator<T>> {
-    using value_type        = T;
+public:
+    using value_type        = typename T;
     using MySelf            = VectorForwardIterator<T>;
     using Parent            = GeneralIterator<MySelf>;
-public:
-    using GeneralIterator<MySelf>::GeneralIterator; // Inherit constructor
+    using Parent::Parent; // Inherit constructor
  
     // Prefix increment
     VectorForwardIterator& operator++() { ++Parent::m_ptr; return *this; }  
@@ -19,7 +18,7 @@ public:
 template <typename T>
 struct VectorAscTraits {
     using value_type        = T;
-    using ForwardIterator   = VectorForwardIterator<value_type>;
+    using ForwardIterator   = VectorForwardIterator<T>;
 };
 
 template <typename Traits>
