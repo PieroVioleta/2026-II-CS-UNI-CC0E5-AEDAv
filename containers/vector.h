@@ -1,6 +1,6 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
-
+#include <mutex>
 #include "GeneralIterator.h"
 using namespace std;
 
@@ -31,6 +31,7 @@ private:
     value_type  *m_data     = nullptr;   // puntero al arreglo dinámico
     size_t       m_size     = 0,         // cantidad actual
                  m_capacity = 0;         // capacidad
+    mutex        m_mutex;                // mutex para sincronización
 
     void resize(size_t new_cap) {
         if (new_cap <= m_capacity) return;
@@ -72,6 +73,7 @@ public:
     }
 
     void push_back(const value_type& value) {
+        lock_guard<mutex> lock(m_mutex);
         if (m_size == m_capacity) {
             size_t new_cap = (m_capacity == 0) ? 10 : m_capacity * 2;
             resize(new_cap);
@@ -81,9 +83,9 @@ public:
     }
 
     void pop_back() {
-        if (m_size > 0) {
+        lock_guard<mutex> lock(m_mutex);
+        if (m_size > 0)
             --m_size;
-        }
     }
 
     value_type& operator[](size_t index) {
@@ -101,6 +103,7 @@ public:
     bool   empty()    const { return m_size == 0; }
 
     void clear() {
+        lock_guard<mutex> lock(m_mutex);
         delete [] m_data;
         m_data     = nullptr;
         m_size     = 0;
@@ -112,6 +115,7 @@ public:
 
     // Persistencia
     ostream &write(ostream &os){
+        lock_guard<mutex> lock(m_mutex);
         os << "[";
         for (size_t i = 0; i < size()-1; ++i)
             os << m_data[i] << " ";
@@ -130,6 +134,7 @@ public:
     // Iterator Level #0
     template <typename Func, typename... Args>
     void ApplyFunction(Func func, Args... args) {
+        lock_guard<mutex> lock(m_mutex);
         for (size_t i = 0; i < size(); ++i) {
             func(m_data[i], args...);
         }
