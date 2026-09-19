@@ -160,6 +160,7 @@ public:
 
     // Persistencia
     ostream &write(ostream &os){
+        // TODO: convertirla en una linea que usa la funcion ApplyFunction generica
         lock_guard<mutex> lock(m_mutex);
         os << "[";
         for (size_t i = 0; i < size()-1; ++i)
@@ -173,13 +174,14 @@ public:
     istream &read(istream &is){
         // Implementation for reading vector from stream
     }
-    // TODO: aplicarle una funcion a cada elemento.
+    // Aplicarle una funcion a cada elemento.
     //       ej. sumarle un valor x
     // Variadic template to allow passing additional arguments to the function
     // Iterator Level #0
     template <typename Func, typename... Args>
     void ApplyFunction(Func func, Args... args) {
         lock_guard<mutex> lock(m_mutex);
+        // TODO: retutilizar la funcion ApplyFunction generica de foreach.h
         for (size_t i = 0; i < size(); ++i) {
             func(m_data[i], args...);
         }
