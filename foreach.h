@@ -1,5 +1,7 @@
 #ifndef __FOREACH_H__
 #define __FOREACH_H__
+#include <utility> // std::forward
+using namespace std;
 
 // Variadic template to allow passing additional arguments to the function
 // template <typename Container, typename Func, typename... Args>
@@ -19,10 +21,15 @@
 // }
 
 // Iterator Level #3
+// args se reenvia en cada iteracion del for: si Args deduce un rvalue real
+// (no una referencia), forward lo moveria repetidamente en cada llamada a
+// func, dejandolo invalido despues de la primera. Usar args solo para
+// referencias/constantes compartidas entre elementos (streams, valores a
+// sumar, etc.), no para recursos que func deba consumir/mover.
 template <typename Iterator, typename Func, typename... Args>
-void ApplyFunction(Iterator begin, Iterator end, Func func, Args... args) {
+void ApplyFunction(Iterator begin, Iterator end, Func func, Args&&... args) {
     for (auto iter = begin; iter != end; ++iter)
-        func(*iter, args...);
+        func(*iter, std::forward<Args>(args)...);
 }
 
 // // Iterator Level #3
@@ -33,9 +40,9 @@ void ApplyFunction(Iterator begin, Iterator end, Func func, Args... args) {
 
 // Iterator Level #4
 template <typename Container, typename Func, typename... Args>
-void ApplyFunction(Container &container, Func func, Args... args) {
+void ApplyFunction(Container &container, Func func, Args&&... args) {
     for (auto &v : container)
-        func(v, args...);
+        func(v, std::forward<Args>(args)...);
 }
 
 #endif // __FOREACH_H__

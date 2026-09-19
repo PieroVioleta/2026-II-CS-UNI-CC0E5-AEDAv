@@ -22,6 +22,10 @@ void Square(GeneralNode<TX> &node) {
     node.value() *= node.value();
 }
 
+template <typename Node>
+void PrintNode(Node &node, ostream &os) {
+    os << node << " ";
+}
 const int NThreads = 5;
 
 // Inserta secuencialmente cada pareja (valor, ref) de 'values' en el
@@ -34,11 +38,10 @@ void InsertElements(Container &container,
         container.push_back(v.first, v.second);
 }
 
-template <typename Container, typename Func, typename... Args>
+template <typename Container>
 void TestContainer(Container &container,
                     const vector<pair<typename Container::value_type, Ref>> &values,
-                    const string &filename,
-                    Func func, Args... args) {
+                    const string &filename) {
     InsertElements(container, values);
 
     // Impresion usando write()
@@ -56,11 +59,21 @@ void TestContainer(Container &container,
     // Escritura en pantalla usando cout directamente (operator<<)
     cout << "Container using cout directly: ";
     cout << container << endl;
+}
 
-    // ApplyFunction sobre cada elemento
-    ::ApplyFunction(container, func, args...);
-    cout << "Container after ApplyFunction: ";
-    cout << container << endl;
+// Prueba los recorridos del Container hacia adelante (begin/end) y hacia
+// atras (rbegin/rend) solamente, imprimiendo los elementos en cada sentido.
+template <typename Container>
+void TestTraversal(Container &container) {
+    using Node = typename Container::Node;
+
+    cout << "Forward traversal:  [";
+    ::ApplyFunction(container.begin(), container.end(), PrintNode<Node>, cout);
+    cout << "]" << endl;
+
+    cout << "Backward traversal: [";
+    ::ApplyFunction(container.rbegin(), container.rend(), PrintNode<Node>, cout);
+    cout << "]" << endl;
 }
 
 void DemoVector() {
@@ -71,13 +84,13 @@ void DemoVector() {
     // Cada elemento es una pareja (valor, ref) que se guarda en un Node;
     // el constructor initializer_list arma el Vector inicial de una vez
     Vector<VectorAscTraits<TX>> vec({{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}});
-    TestContainer(vec, {{5, 15}, {6, 16}, {7, 17}, {8, 18}, {9, 19}}, "vector.txt", AddOne);
-    TestContainer(vec, {}, "vector.txt", AddX<TX>, 7);
-    TestContainer(vec, {}, "vector.txt", Square);
+    TestContainer(vec, {{5, 15}, {6, 16}, {7, 17}, {8, 18}, {9, 19}}, "vector.txt");
+    TestTraversal(vec);
 
     ofstream("vector_str.txt", ios::trunc).close();
     Vector<VectorAscTraits<string>> strVec;
-    TestContainer(strVec, {{"Hello", 1}, {"World", 2}}, "vector_str.txt", AddX<string>, string("!-X"));
+    TestContainer(strVec, {{"Hello", 1}, {"World", 2}}, "vector_str.txt");
+    TestTraversal(strVec);
 }
 
 // Insertamos muchos elementos (generados en un loop, no a mano)
