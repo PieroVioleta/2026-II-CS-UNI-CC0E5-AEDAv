@@ -1,6 +1,7 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 #include <mutex>
+#include <initializer_list>
 #include "GeneralIterator.h"
 #include "../types.h" // Ref
 using namespace std;
@@ -67,6 +68,12 @@ private:
 
 public:
     Vector() {}
+
+    // Cada elemento de la lista es una pareja (valor, ref) para un Node
+    Vector(initializer_list<pair<value_type, Ref>> values) {
+        for (const auto &v : values)
+            push_back(v.first, v.second);
+    }
 
     virtual ~Vector() {
         clear();
