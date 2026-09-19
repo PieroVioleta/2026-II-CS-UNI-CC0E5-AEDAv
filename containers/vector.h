@@ -19,6 +19,18 @@ public:
 };
 
 template <typename T>
+class VectorBackwardIterator : public GeneralIterator<VectorBackwardIterator<T>, T> {
+public:
+    using value_type        = T;
+    using MySelf            = VectorBackwardIterator<T>;
+    using Parent            = GeneralIterator<MySelf, T>;
+    using Parent::Parent; // Inherit constructor
+
+    // Prefix increment
+    VectorBackwardIterator& operator++() { --Parent::m_ptr; return *this; }
+};
+
+template <typename T>
 struct GeneralNode{
 private:
     T   m_value;
@@ -41,7 +53,8 @@ template <typename T>
 struct VectorAscTraits {
     using value_type        = T;
     using Node              = GeneralNode<T>;
-    using ForwardIterator   = VectorForwardIterator<Node>; // itera sobre Node, no sobre T
+    using ForwardIterator   = VectorForwardIterator<Node>;  // itera sobre Node, no sobre T
+    using BackwardIterator  = VectorBackwardIterator<Node>; // itera sobre Node, no sobre T
 };
 
 template <typename Traits>
@@ -50,6 +63,7 @@ public:
     using value_type        = Traits::value_type;
     using Node              = Traits::Node;
     using ForwardIterator   = Traits::ForwardIterator;
+    using BackwardIterator  = Traits::BackwardIterator;
 private:
     Node        *m_data     = nullptr;   // puntero al arreglo dinámico
     size_t       m_size     = 0,         // cantidad actual
@@ -139,8 +153,10 @@ public:
         m_capacity = 0;
     }
 
-    ForwardIterator begin() { return ForwardIterator(m_data); }
-    ForwardIterator end()   { return ForwardIterator(m_data + m_size); }
+    ForwardIterator   begin() { return ForwardIterator(m_data); }
+    ForwardIterator   end()   { return ForwardIterator(m_data + m_size); }
+    BackwardIterator rbegin() { return BackwardIterator(m_data + m_size - 1); }
+    BackwardIterator rend()   { return BackwardIterator(m_data - 1); }
 
     // Persistencia
     ostream &write(ostream &os){
