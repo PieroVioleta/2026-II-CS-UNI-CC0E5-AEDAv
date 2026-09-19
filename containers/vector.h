@@ -2,6 +2,7 @@
 #define __VECTOR_H__
 #include <mutex>
 #include "GeneralIterator.h"
+#include "../types.h" // Ref
 using namespace std;
 
 template <typename T>
@@ -11,31 +12,52 @@ public:
     using MySelf            = VectorForwardIterator<T>;
     using Parent            = GeneralIterator<MySelf, T>;
     using Parent::Parent; // Inherit constructor
- 
+
     // Prefix increment
-    VectorForwardIterator& operator++() { ++Parent::m_ptr; return *this; }  
+    VectorForwardIterator& operator++() { ++Parent::m_ptr; return *this; }
+};
+
+template <typename T>
+struct GeneralNode{
+private:
+    T   m_value;
+    Ref m_ref;      // Reference to the value
+
+public:
+    GeneralNode() = default; // requerido por resize(): new Node[new_cap]
+    GeneralNode(const T& value, Ref ref) : m_value(value), m_ref(ref) {}
+    T    getValue() const { return m_value; }
+    Ref  getRef()   const { return m_ref;   }
+    T&   value()          { return m_value; } // acceso mutable para ApplyFunction
+
+    friend ostream &operator <<(ostream &os, const GeneralNode<T> &node) {
+        os << "(" << node.getValue() << "," << node.getRef() << ")";
+        return os;
+    }
 };
 
 template <typename T>
 struct VectorAscTraits {
     using value_type        = T;
-    using ForwardIterator   = VectorForwardIterator<T>;
+    using Node              = GeneralNode<T>;
+    using ForwardIterator   = VectorForwardIterator<Node>; // itera sobre Node, no sobre T
 };
 
 template <typename Traits>
 class Vector {
 public:
     using value_type        = Traits::value_type;
+    using Node              = Traits::Node;
     using ForwardIterator   = Traits::ForwardIterator;
 private:
-    value_type  *m_data     = nullptr;   // puntero al arreglo dinámico
+    Node        *m_data     = nullptr;   // puntero al arreglo dinámico
     size_t       m_size     = 0,         // cantidad actual
                  m_capacity = 0;         // capacidad
     mutex        m_mutex;                // mutex para sincronización
 
     void resize(size_t new_cap) {
         if (new_cap <= m_capacity) return;
-        value_type* new_data = new value_type[new_cap];
+        Node* new_data = new Node[new_cap];
         for (size_t i = 0; i < m_size; ++i)
             new_data[i] = m_data[i];
         delete[] m_data;
@@ -72,13 +94,13 @@ public:
         return *this;
     }
 
-    void push_back(const value_type& value) {
+    void push_back(const value_type& value, Ref ref) {
         lock_guard<mutex> lock(m_mutex);
         if (m_size == m_capacity) {
             size_t new_cap = (m_capacity == 0) ? 10 : m_capacity * 2;
             resize(new_cap);
         }
-        m_data[m_size] = value;
+        m_data[m_size] = Node(value, ref);
         ++m_size;
     }
 
@@ -88,12 +110,12 @@ public:
             --m_size;
     }
 
-    value_type& operator[](size_t index) {
+    Node& operator[](size_t index) {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
 
-    value_type& at(size_t index) {
+    Node& at(size_t index) {
         if (index >= m_size) throw std::out_of_range("Indice fuera de rango");
         return m_data[index];
     }
@@ -118,7 +140,7 @@ public:
         lock_guard<mutex> lock(m_mutex);
         os << "[";
         for (size_t i = 0; i < size()-1; ++i)
-            os << m_data[i] << " ";
+            os << m_data[i] << ",";
         if (size() > 0)
             os << m_data[size()-1];
         return os << "]";
