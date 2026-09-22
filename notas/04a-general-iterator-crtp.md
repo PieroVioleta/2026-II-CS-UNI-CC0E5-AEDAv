@@ -167,6 +167,55 @@ Vector<VectorAscTraits<TX>> vec;
 `Vector` ya no menciona a su iterador: lo pide al traits. Cambiar la dirección
 del recorrido (nota 10) = otro traits, cero cambios en `Vector`.
 
+## ¿Cómo usa la base al hijo? (polimorfismo estático)
+
+En la v3 del curso, la base solo usa al hijo como **identidad de tipo** (los
+`friend` comparan `const Derived&`). Pero el mecanismo completo de CRTP va más
+allá: la base puede **ejecutar código del hijo** mediante un cast estático:
+
+```cpp
+// Fuera del curso — el patrón clásico de CRTP
+template <typename Derived>
+class Printable {
+public:
+    void print() const {
+        const Derived &self = static_cast<const Derived&>(*this);
+        //                    └ *this SIEMPRE es (o deriva de) Derived:
+        //                      la única forma de instanciar la base es heredando
+        self.writeTo(std::cout);   // ← método que SOLO existe en el hijo
+    }
+};
+
+class Vector : public Printable<Vector> {   // se pasa a sí mismo
+public:
+    void writeTo(std::ostream &os) const;   // implementación concreta
+};
+```
+
+- **Por qué el cast es seguro**: el objeto concreto siempre es `Derived` (o un
+  hijo suyo); no hace falta chequeo en runtime y el cast no cuesta nada.
+- **Por qué es "polimorfismo estático"**: `self.writeTo()` se resuelve en
+  **compile-time** (sin `virtual`, sin vptr, sin vtable) — a diferencia del
+  polimorfismo clásico, que lo resuelve en runtime.
+- **El límite**: cuando el compilador procesa la *definición* de la base, el
+  hijo aún es un tipo incompleto. La base solo puede usar miembros del hijo
+  **dentro de cuerpos de función que se instancian después** (como `print()`,
+  que no se genera hasta que alguien la llama). Por eso la v2 falló: intentó
+  leer `typename Iterator::value_type` fuera de un cuerpo instanciable.
+
+**En el código del curso** la dependencia queda así:
+
+| Dirección | Qué pasa | Ejemplo |
+|-----------|----------|---------|
+| hijo → padre | accede a **datos** | `Parent::m_ptr`, `using Parent::Parent` |
+| padre → hijo | usa solo **tipos**, nunca miembros definidos en el hijo | `friend operator==(const Derived&...)` |
+
+`GeneralIterator` no llama métodos del hijo. Si quisiera — p. ej. que la base
+implemente `advance()` delegando en el hijo — ahí sí haría falta
+`static_cast<Derived*>(this)`. La v2 lo intentó con tipos y el compilador lo
+rechazó: la lección es que **el padre puede saber *quién* es el hijo, pero no
+leer su definición**.
+
 ## Vector 2.0: lo que más cambió en el contenedor
 
 | Antes | Después (`289e3e1`) | Comentario |
