@@ -14,7 +14,7 @@
 ## 🎯 En qué estábamos
 
 Tras el setup (nota 00), el profesor trajo una implementación de un `Vector`
-**copiada de IA** como punto de partida, y sobre ella empezamos a hacer
+**copiada de Deepseek** como punto de partida, y sobre ella empezamos a hacer
 ingeniería inversa: entenderla, ejecutarla y encontrarle problemas.
 
 ## 🧩 La implementación
