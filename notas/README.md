@@ -17,7 +17,7 @@
 | 04 | [Iteradores y CRTP](04-iteradores.md) | `05-iterator`, `06-CRTP`, `07-Vector2.0` | `GeneralIterator.h`, CRTP — 🔬 [deep-dive CRTP](04a-general-iterator-crtp.md) |
 | 05 | [Makefile](05-build.md) | `08-Makefile` | Build con Makefile |
 | 06 | [Testing del contenedor](06-testing.md) | `09-TestContainer` | Iterator con errores, TODOs |
-| 07 | [Concurrencia](07-concurrencia.md) | `10-Concurrency` | Mutex en `push_back` |
+| 07 | [Concurrencia](07-concurrencia.md) | `10-Concurrency` | Mutex en `push_back` — 🔬 [deep-dive race condition](07a-race-condition.md) |
 | 08 | [Node (value, ref)](08-node.md) | `11-Node` | `Vector` almacena pares |
 | 09 | [Initializer list](09-initializer-list.md) | `12-InitializerList` | Constructor con `initializer_list` |
 | 10 | [Iterador hacia atrás](10-backward-iterator.md) | `13-BackwardIterator`, `14-TestTraversal` | `rbegin()`/`rend()`, test de recorrido |
