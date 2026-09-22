@@ -10,7 +10,7 @@
 
 | # | Nota | Ramas cubiertas | Tema |
 |---|------|-----------------|------|
-| 00 | [Setup y punto de partida](00-setup.md) | `00-Students`, `01-Main` | Setup, C++23, Demos |
+| 00 | [Setup y punto de partida](00-setup.md) | `00-Students`, `01-Main` | Repo base, roster vía PRs, primer `main.cpp`, C++23 |
 | 01 | [El vector copiado de IA](01-vector-copiado.md) | `02-Vector` | `containers/vector.h`, críticas iniciales |
 | 02 | [Impresión del vector](02-impresion.md) | `operator<<`, `04-operator` | `operator<<`, Vector 0.42→0.43 |
 | 03 | [foreach y ApplyFunction](03-foreach.md) | `foreach`, `03-Foreach3`, `04-foreach4` | Recorridos, `foreach.h`, `types.h` |
