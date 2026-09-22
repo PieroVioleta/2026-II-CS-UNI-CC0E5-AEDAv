@@ -24,6 +24,10 @@ retoque estético de `vector.h` (y hereda el `push_back` roto de 0.43).
 
 ## 🧩 La implementación
 
+> 🔬 Esta etapa tiene un **deep-dive aparte** con la escalera de niveles
+> explicada peldaño a peldaño y compilaciones verificadas:
+> **[03a-escalera-applyfunction.md](03a-escalera-applyfunction.md)**
+
 ### Antes (`02-Vector` / `04-operator`)
 
 Para operar sobre cada elemento había que escribir el loop a mano cada vez, o

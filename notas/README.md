@@ -13,7 +13,7 @@
 | 00 | [Setup y punto de partida](00-setup.md) | `00-Students`, `01-Main` | Repo base, roster vía PRs, primer `main.cpp`, C++23 |
 | 01 | [El vector copiado de IA](01-vector-copiado.md) | `02-Vector` | `containers/vector.h`, críticas iniciales |
 | 02 | [Impresión del vector](02-impresion.md) | `operator<<`, `04-operator` | Template, `operator<<` + streams, Vector 0.4→0.43 |
-| 03 | [foreach y ApplyFunction](03-foreach.md) | `foreach`, `03-Foreach3`, `04-foreach4` | Recorridos, `foreach.h`, `types.h` |
+| 03 | [foreach y ApplyFunction](03-foreach.md) | `foreach`, `03-Foreach3`, `04-foreach4` | Recorridos, `foreach.h`, `types.h` — 🔬 [deep-dive de la escalera](03a-escalera-applyfunction.md) |
 | 04 | [Iteradores y CRTP](04-iteradores.md) | `05-iterator`, `06-CRTP`, `07-Vector2.0` | `GeneralIterator.h`, CRTP |
 | 05 | [Makefile](05-build.md) | `08-Makefile` | Build con Makefile |
 | 06 | [Testing del contenedor](06-testing.md) | `09-TestContainer` | Iterator con errores, TODOs |
