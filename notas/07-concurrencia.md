@@ -1,13 +1,25 @@
 # 07 · Concurrencia
 
-> **Ramas cubiertas:** `10-Concurrency`
-> **Tema:** mutex para sincronizar `Vector` contra `push_back` concurrente
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `10-Concurrency` | `5575be8` | `containers/vector.h`, `Demos`, `vector.txt` | — |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

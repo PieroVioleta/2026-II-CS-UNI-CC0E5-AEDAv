@@ -1,13 +1,25 @@
 # 05 · Makefile
 
-> **Ramas cubiertas:** `08-Makefile`
-> **Archivos clave:** `Makefile`
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `08-Makefile` | `dc783fe` | `Makefile`, `.gitignore`, `main.cpp` | — |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

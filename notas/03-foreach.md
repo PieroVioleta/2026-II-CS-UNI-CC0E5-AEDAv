@@ -1,13 +1,29 @@
 # 03 · foreach y ApplyFunction
 
-> **Ramas cubiertas:** `foreach` (Vector 0.432), `03-Foreach3` (nivel 3), `04-foreach4` (nivel 4)
-> **Archivos clave:** `foreach.h`, `types.h`
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `foreach` ⚠ | (rama local) | `foreach.h`, `types.h`, `containers/vector.h`, `Demos`, `vector.txt` | 0.432 |
+| `03-Foreach3` | `a73d619` | `foreach.h` | — |
+| `04-foreach4` | `5ca72aa` | — | — |
 
-## Ideas clave
+⚠ Rama borrada en upstream, sigue disponible como rama local.
 
-## Pendientes / preguntas
+## 🎯 En qué estábamos
+
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

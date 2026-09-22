@@ -1,12 +1,28 @@
 # 02 · Impresión del vector (operator<<)
 
-> **Ramas cubiertas:** `operator<<` (Vector 0.42), `04-operator` (Vector 0.43)
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `operator<<` ⚠ | (rama local) | `containers/vector.h`, `Demos.cpp/h`, `types.h`, `vector.txt` | 0.42 |
+| `04-operator` | `66d3014` | `containers/vector.h` | 0.43 |
 
-## Ideas clave
+⚠ Rama borrada en upstream, sigue disponible como rama local.
 
-## Pendientes / preguntas
+## 🎯 En qué estábamos
+
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

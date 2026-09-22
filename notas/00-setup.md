@@ -1,12 +1,26 @@
 # 00 · Setup y punto de partida
 
-> **Ramas cubiertas:** `00-Students`, `01-Main`
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `00-Students` | `bc4e482` | `Students.txt`, `README.md` | — |
+| `01-Main` | `7c4ff30` | `main.cpp`, `Demos.cpp/h` | — |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

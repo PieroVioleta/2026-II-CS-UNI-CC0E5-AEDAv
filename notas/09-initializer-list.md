@@ -1,13 +1,25 @@
 # 09 · Initializer list
 
-> **Ramas cubiertas:** `12-InitializerList`
-> **Tema:** constructor `Vector(initializer_list<pair<value_type, Ref>>)`
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `12-InitializerList` | `3e9d58a` | `containers/vector.h`, `Demos.cpp` | — |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

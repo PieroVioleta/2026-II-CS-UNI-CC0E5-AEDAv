@@ -1,13 +1,25 @@
 # 08 · Node (value, ref)
 
-> **Ramas cubiertas:** `11-Node`
-> **Tema:** adaptar `Vector` para almacenar pares `Node` (valor, referencia)
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `11-Node` | `791e75c` | `containers/vector.h`, `types.h`, `Demos.cpp` | — |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias

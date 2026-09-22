@@ -1,13 +1,25 @@
 # 01 · El vector copiado de IA
 
-> **Ramas cubiertas:** `02-Vector` (Vector 0.3)
-> **Archivos clave:** `containers/vector.h`, `main.cpp`, `Demos.cpp/h`
 > **Estado:** esqueleto — por llenar
 
-## Qué hacía el código antes
+## 📋 Ficha
 
-## Qué mejoró / explicó el profe
+| Rama(s) | Commit(s) | Archivos tocados | Versión Vector |
+|---------|-----------|------------------|----------------|
+| `02-Vector` | `b54034e` | `containers/vector.h`, `main.cpp`, `Demos.cpp/h` | 0.3 |
 
-## Ideas clave
+## 🎯 En qué estábamos
 
-## Pendientes / preguntas
+## 🧩 La implementación
+
+### Antes (rama anterior)
+
+### Después (esta etapa)
+
+## 📚 Conceptos nuevos
+
+## 👨‍🏫 Lo que explicó el profe
+
+## ✍️ Mi práctica
+
+## 🔗 Referencias
