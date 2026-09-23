@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream> // ofstream para escribir en archivo
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -74,6 +75,33 @@ void TestTraversal(Container &container) {
     cout << "Backward traversal: [";
     ::ApplyFunction(container.rbegin(), container.rend(), PrintNode<Node>, cout);
     cout << "]" << endl;
+}
+
+void TestReadWrite() {
+    Vector<VectorAscTraits<TX>> a({{0, 10}, {1, 11}, {2, 12}});
+    stringstream ss;
+    a.write(ss);
+    cout << "write:  " << ss.str() << endl;
+
+    Vector<VectorAscTraits<TX>> b;
+    ss >> b;
+    cout << "read:   " << b << endl;
+
+    Vector<VectorAscTraits<TX>> vacio;
+    stringstream vacio_ss;
+    vacio.write(vacio_ss);
+    vacio_ss >> vacio;
+    cout << "vacio:  " << vacio << endl;
+
+    Vector<VectorAscTraits<TX>> reemplazo({{9, 99}});
+    stringstream ss2("[(5,50),(6,60)]");
+    ss2 >> reemplazo;
+    cout << "reemplazo: " << reemplazo << endl;
+
+    Vector<VectorAscTraits<TX>> malo;
+    stringstream ss3("basura");
+    ss3 >> malo;
+    cout << "basura: " << malo << " fail=" << ss3.fail() << endl;
 }
 
 void DemoVector() {

@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include "GeneralIterator.h"
 #include "../types.h" // Ref
+#include "../foreach.h" 
 using namespace std;
 
 template <typename T>
@@ -160,19 +161,37 @@ public:
 
     // Persistencia
     ostream &write(ostream &os){
-        // TODO: convertirla en una linea que usa la funcion ApplyFunction generica
         lock_guard<mutex> lock(m_mutex);
+        bool is_first = true;
         os << "[";
-        for (size_t i = 0; i < size()-1; ++i)
-            os << m_data[i] << ",";
-        if (size() > 0)
-            os << m_data[size()-1];
+        ::ApplyFunction(begin(), end(), [&is_first](Node &node, ostream &out) {
+            if (!is_first)
+                out << ",";
+            out << node;
+            is_first = false;
+        }, os);
         return os << "]";
     }
 
-    // TODO: implementar la lectura de un vector desde un stream
     istream &read(istream &is){
-        // Implementation for reading vector from stream
+        clear();
+        char sep = 0;
+        value_type value;
+        Ref ref;
+        if (!(is >> sep) || sep != '[')
+            return is;
+        while (is >> sep && sep != ']') {
+            if (sep != '(')
+                return is;
+            is >> value >> sep >> ref >> sep;
+            if (!is)
+                return is;
+            push_back(value, ref);
+            is >> sep;
+            if (!is || sep != ',')
+                return is;
+        }
+        return is;
     }
     // Aplicarle una funcion a cada elemento.
     //       ej. sumarle un valor x
@@ -181,10 +200,7 @@ public:
     template <typename Func, typename... Args>
     void ApplyFunction(Func func, Args... args) {
         lock_guard<mutex> lock(m_mutex);
-        // TODO: retutilizar la funcion ApplyFunction generica de foreach.h
-        for (size_t i = 0; i < size(); ++i) {
-            func(m_data[i], args...);
-        }
+        ::ApplyFunction(begin(), end(), func, args...);
     }
 };
 
