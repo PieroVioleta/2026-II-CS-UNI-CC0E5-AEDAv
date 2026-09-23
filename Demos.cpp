@@ -102,6 +102,16 @@ void TestReadWrite() {
     stringstream ss3("basura");
     ss3 >> malo;
     cout << "basura: " << malo << " fail=" << ss3.fail() << endl;
+
+    ifstream file("vector.txt");
+    Vector<VectorAscTraits<TX>> desdeArchivo;
+    file >> desdeArchivo;
+    cout << "desde vector.txt: " << desdeArchivo << endl;
+
+    ifstream fileStr("vector_str.txt");
+    Vector<VectorAscTraits<string>> desdeArchivoStr;
+    fileStr >> desdeArchivoStr;
+    cout << "desde vector_str.txt: " << desdeArchivoStr << " fail=" << fileStr.fail() << endl;
 }
 
 void DemoVector() {
