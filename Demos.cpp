@@ -6,6 +6,7 @@
 #include <vector>
 #include "foreach.h"
 #include "containers/vector.h"
+#include "containers/linkedlist.h"
 #include "Demos.h"
 using namespace std;
 
@@ -154,8 +155,18 @@ void DemoRaceCondition() {
              << "sincroniza correctamente las inserciones concurrentes" << endl;
 }
 
-// TODO: Implementar DemoLinkedList() para probar la lista enlazada y sus iteradores.
 void DemoLinkedList()
 {
-    // Implementation for LinkedList demo
+    LinkedList<LinkedListAscTraits<TX>> list;
+    list.push_back(3, 30);
+    list.push_back(1, 10);
+    list.push_back(2, 20);
+    cout << "List: " << list << endl;
+
+    cout << "Traversal: ";
+    ::ApplyFunction(list.begin(), list.end(), PrintNode<LinkedListNode<TX>>, cout);
+    cout << endl;
+
+    list.insert(0, 5);
+    cout << "after insert(0,5): " << list << endl;
 }

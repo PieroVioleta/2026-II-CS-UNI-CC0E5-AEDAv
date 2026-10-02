@@ -9,14 +9,9 @@ template <typename T>
 class LinkedListNode : public GeneralNode<T> {
     using Node    = LinkedListNode<T>;
     using NodePtr = Node *;
-    Node *m_pNext = nullptr; // puntero al siguiente nodo
 public:
+    Node *m_pNext = nullptr; // puntero al siguiente nodo
     LinkedListNode(const T& value, Ref ref, Node *pNext) : GeneralNode<T>(value, ref), m_pNext(pNext){}
-    // TODO: El operator<< deberia ir en GeneralNode, no en LinkedListNode, para que sea generico y reusable.
-    friend std::ostream &operator <<(std::ostream &os, const LinkedListNode<T> &node) {
-        os << "(" << node.getValue() << "," << node.getRef() << ")";
-        return os;
-    }
 };
 
 template <typename T>
@@ -26,7 +21,7 @@ public:
     using MySelf            = LinkedListForwardIterator<T>;
     using Parent            = GeneralIterator<MySelf, value_type>;
     using Parent::Parent; // Inherit constructor
-    operator++() { Parent::m_ptr = Parent::m_ptr->m_pNext; return *this; }
+    LinkedListForwardIterator& operator++() { Parent::m_ptr = Parent::m_ptr->m_pNext; return *this; }
 };
 
 template <typename T>
@@ -46,30 +41,34 @@ public:
 private:
     NodePtr m_pRoot = nullptr; // puntero al primer nodo de la lista enlazada
     NodePtr m_pTail = nullptr; // puntero al último nodo de la lista enlazada
-    // TODO: agregar mutex para sincronización de acceso concurrente
     std::mutex m_mutex;             // mutex para sincronización
 
-    NodePtrGetRoot() const { return m_pRoot; }
+    NodePtr GetRoot() const { return m_pRoot; }
 public:
     LinkedList() {}
-    // TODO: implementar LinkedList con nodos enlazados y métodos push_back.
     LinkedList(const LinkedList&)            = delete; // no se permite copia
-    // TODO: implementar LinkedList con nodos enlazados y métodos push_back.
     LinkedList& operator=(const LinkedList&) = delete; // no se permite asignacion
 
-    // TODO: implementar la destruccion en un metodo clear()
     void clear();
-    // TODO: implementar destructor para liberar memoria de forma segura
     virtual ~LinkedList();
 
-    // TODO: implementar métodos de iteración, push_back, etc.
-    void push_back(const value_type& value, Ref ref);
+    void push_back(const value_type& value, Ref ref) {
+        lock_guard<mutex> lock(m_mutex);
+        NodePtr pNew = new Node(value, ref, nullptr);
+        if (m_pTail == nullptr)
+            m_pRoot = pNew;
+        else
+            m_pTail->m_pNext = pNew;
+        m_pTail = pNew;
+    }
 
 private:
     void internalInsert(const value_type& value, Ref ref, NodePtr&rParent);
 public:
-    // TODO: implementar insert() para LinkedList
-    void insert(const value_type& value, Ref ref){ internalInsert(value, ref, m_pRoot); } 
+    void insert(const value_type& value, Ref ref){
+        lock_guard<mutex> lock(m_mutex);
+        internalInsert(value, ref, m_pRoot);
+    }
     
     // TODO: persistencia: write() y read() para LinkedList
     std::ostream &write(std::ostream &os) { return os << *this; }
@@ -85,9 +84,8 @@ public:
         return os << "]";
     }
     // TODO: implementar
-    friend std::istream &operator >>(std::istream &is, const LinkedList<Traits> &list) {
-        clear();
-        return is; 
+    friend std::istream &operator >>(std::istream &is, LinkedList<Traits> &list) {
+        return is;
     }
     // Iterators
     ForwardIterator begin() { return ForwardIterator(m_pRoot); }
@@ -99,9 +97,19 @@ public:
 
 
 template <typename Traits>
-LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>&){ // no se permite asignacion
+void LinkedList<Traits>::clear() {
+    lock_guard<mutex> lock(m_mutex);
+    while (m_pRoot != nullptr) {
+        NodePtr pNext = m_pRoot->m_pNext;
+        delete m_pRoot;
+        m_pRoot = pNext;
+    }
+    m_pTail = nullptr;
+}
 
-    return *this;
+template <typename Traits>
+LinkedList<Traits>::~LinkedList() {
+    clear();
 }
 
 // TODO: explicar recursividad de cola de llamadas en insert() y internalInsert()
