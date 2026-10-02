@@ -70,7 +70,6 @@ public:
         internalInsert(value, ref, m_pRoot);
     }
     
-    // TODO: persistencia: write() y read() para LinkedList
     std::ostream &write(std::ostream &os) { return os << *this; }
     std::istream &read(std::istream &is)  { return is >> *this; }
     friend std::ostream &operator <<(std::ostream &os, const LinkedList<Traits> &list) {
@@ -83,8 +82,24 @@ public:
         }
         return os << "]";
     }
-    // TODO: implementar
     friend std::istream &operator >>(std::istream &is, LinkedList<Traits> &list) {
+        list.clear();
+        char sep = 0;
+        value_type value;
+        Ref ref;
+        if (!(is >> sep) || sep != '[')
+            return is;
+        while (is >> sep && sep != ']') {
+            if (sep != '(')
+                return is;
+            is >> value >> sep >> ref >> sep;
+            if (!is)
+                return is;
+            list.push_back(value, ref);
+            is >> sep;
+            if (!is || sep != ',')
+                return is;
+        }
         return is;
     }
     // Iterators

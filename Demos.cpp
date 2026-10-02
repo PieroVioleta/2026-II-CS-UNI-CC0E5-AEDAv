@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream> // ofstream para escribir en archivo
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -169,4 +170,12 @@ void DemoLinkedList()
 
     list.insert(0, 5);
     cout << "after insert(0,5): " << list << endl;
+
+    stringstream ss;
+    list.write(ss);
+    cout << "list write: " << ss.str() << endl;
+
+    LinkedList<LinkedListAscTraits<TX>> copy;
+    ss >> copy;
+    cout << "list read:  " << copy << endl;
 }
