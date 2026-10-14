@@ -53,23 +53,6 @@ class DoubleCircularLinkedList : public DoubleLinkedList<DoubleCircularTraits<T>
     using Node    = typename Base::Node;
     using NodePtr = typename Base::NodePtr;
 public:
-    DoubleCircularLinkedList() {}
-
-    void clear() {
-        lock_guard<mutex> lock(this->m_mutex);
-        if (this->m_pRoot == nullptr)
-            return;
-        LinkedListNode<T> *current = this->m_pRoot->m_pNext;
-        while (current != this->m_pRoot) {
-            LinkedListNode<T> *pNext = current->m_pNext;
-            delete current;
-            current = pNext;
-        }
-        delete this->m_pRoot;
-        this->m_pRoot = nullptr;
-        this->m_pTail = nullptr;
-    }
-
     void push_back(const value_type& value, Ref ref) {
         Base::push_back(value, ref);
         lock_guard<mutex> lock(this->m_mutex);

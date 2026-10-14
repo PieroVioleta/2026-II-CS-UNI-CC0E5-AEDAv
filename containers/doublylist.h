@@ -55,8 +55,6 @@ public:
     using NodePtr = typename Base::NodePtr;
     using BackwardIterator = typename Traits::BackwardIterator;
 
-    DoubleLinkedList() {}
-
     void push_back(const value_type& value, Ref ref) {
         NodePtr pOldTail = this->m_pTail;
         Base::push_back(value, ref);

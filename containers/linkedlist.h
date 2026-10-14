@@ -171,9 +171,14 @@ LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>& othe
 
 template <typename Traits>
 void LinkedList<Traits>::clear(){
-    scoped_lock lock(m_mutex);
-    for (auto it = begin(); it != end(); ++it){
-        delete& (*it);
+    lock_guard<mutex> lock(m_mutex);
+    if (m_pTail != nullptr)
+        m_pTail->m_pNext = nullptr;
+    LinkedListNode<value_type> *current = m_pRoot;
+    while (current != nullptr) {
+        LinkedListNode<value_type> *pNext = current->m_pNext;
+        delete current;
+        current = pNext;
     }
     m_pRoot = nullptr;
     m_pTail = nullptr;
