@@ -57,19 +57,6 @@ public:
             this->m_pTail->m_pNext = this->m_pRoot;
     }
 
-    void push_front(const value_type& value, Ref ref) {
-        lock_guard<mutex> lock(this->m_mutex);
-        NodePtr pNew = new Node(value, ref, this->m_pRoot);
-        if (this->m_pRoot == nullptr) {
-            this->m_pRoot = pNew;
-            this->m_pTail = pNew;
-            pNew->m_pNext = pNew;
-        } else {
-            this->m_pTail->m_pNext = pNew;
-            this->m_pRoot = pNew;
-        }
-    }
-
     void insert(const value_type& value, Ref ref) {
         if (this->m_pTail)
             this->m_pTail->m_pNext = nullptr;
@@ -81,42 +68,6 @@ public:
         current->m_pNext = this->m_pRoot;
         this->m_pTail = current;
     }
-
-    void pop_front() {
-        lock_guard<mutex> lock(this->m_mutex);
-        if (this->m_pRoot == nullptr)
-            return;
-        NodePtr pOld = this->m_pRoot;
-        if (pOld == this->m_pTail) {
-            this->m_pRoot = nullptr;
-            this->m_pTail = nullptr;
-        } else {
-            this->m_pTail->m_pNext = pOld->m_pNext;
-            this->m_pRoot = pOld->m_pNext;
-        }
-        delete pOld;
-    }
-
-    void pop_back() {
-        lock_guard<mutex> lock(this->m_mutex);
-        if (this->m_pRoot == nullptr)
-            return;
-        if (this->m_pRoot == this->m_pTail) {
-            delete this->m_pRoot;
-            this->m_pRoot = nullptr;
-            this->m_pTail = nullptr;
-            return;
-        }
-        NodePtr current = this->m_pRoot;
-        while (current->m_pNext != this->m_pTail)
-            current = current->m_pNext;
-        current->m_pNext = this->m_pRoot;
-        delete this->m_pTail;
-        this->m_pTail = current;
-    }
-
-    value_type& front() { return this->m_pRoot->value(); }
-    value_type& back()  { return this->m_pTail->value(); }
 };
 
 #endif // __CIRCULARLIST_H__

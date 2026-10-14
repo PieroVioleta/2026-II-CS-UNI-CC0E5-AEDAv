@@ -233,19 +233,8 @@ void DemoCircularLinkedList()
     list.push_back(2, 20);
     cout << "LC luego de push_back x3: " << list << endl;
 
-    list.push_front(0, 5);
-    cout << "LC luego de push_front(0,5): " << list << endl;
-
     list.insert(2, 25);
     cout << "LC luego de insert(2,25): " << list << endl;
-
-    cout << "LC front: " << list.front() << ", back: " << list.back() << endl;
-
-    list.pop_front();
-    cout << "LC luego de pop_front: " << list << endl;
-
-    list.pop_back();
-    cout << "LC luego de pop_back: " << list << endl;
 
     // bucle nativo
     cout << "Bucle nativo sobre el anillo: ";

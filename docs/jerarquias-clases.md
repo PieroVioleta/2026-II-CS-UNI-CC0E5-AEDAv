@@ -105,16 +105,16 @@ classDiagram
         #Compare m_comp
         #mutable mutex m_mutex
         +push_back() virtual
-        +insert() : internalInsert recursivo (template)
+        +insert() : internalInsert recursivo (template + if constexpr)
         +clear() virtual
         +operator<</operator>> (persistencia)
         +call() / FirstThat() / ApplyFunction()
         +GetRoot()
     }
     class LC~T~ {
-        +push_front() / pop_front() / pop_back()
-        +front() / back()
         +clear() override (circle-safe)
+        +push_back() : base + cerrar anillo
+        +insert() : abrir anillo → base → recerrar
     }
     class DoubleLinkedList~Traits~ {
         +push_back() : base + prev O(1)
@@ -133,10 +133,11 @@ classDiagram
 ```
 
 - `Vector` es la rama independiente (arreglo dinámico con `resize` + `std::exchange` en move).
-- `LinkedList` es la base de las enlazadas: nodos encadenados, insert ordenado (recursión de cola con `NodePtrT&`), persistencia y algoritmos heredables.
-- `LC` (lista circular): hereda y cierra el anillo — ops de deque (`push_front/pop_*`) en O(1) salvo `pop_back`.
+- `LinkedList` es la base de las enlazadas: nodos encadenados, insert ordenado (recursión de cola con `NodePtrT&`, `m_pTail` solo se instancia con `if constexpr` cuando el tipo coincide), persistencia y algoritmos heredables.
+- `LC` (lista circular): hereda y cierra el anillo — sin ops de deque (nunca se pidieron).
 - `DoubleLinkedList` (traits-parametrizada, convención del curso): reutiliza el `insert` de la base y repara los `m_pPrev` con un walk; `rbegin/rend` recorren al revés.
 - `DoubleCircularLinkedList`: reutiliza el `insert` de la LDE (abre el anillo, inserta, recierra) y mantiene el anillo cerrado en ambos sentidos (`tail->next = root`, `root->prev = tail`).
+- Los iteradores forward de la familia doble están tipados con `LinkedListNode<T>` (el nodo base) — así el `++` no necesita `static_cast`; los backward usan `GetPrev()` que ya devuelve el tipo exacto. El único `static_cast` que sobrevive es el repair walk de `DoubleLinkedList::insert` (probado: necesario).
 
 ## 4 · Traits
 

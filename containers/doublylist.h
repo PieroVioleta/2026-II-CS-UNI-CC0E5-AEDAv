@@ -16,13 +16,13 @@ public:
 };
 
 template <typename T>
-class DoubleLinkedListForwardIterator : public GeneralIterator<DoubleLinkedListForwardIterator<T>, DoubleLinkedListNode<T>> {
+class DoubleLinkedListForwardIterator : public GeneralIterator<DoubleLinkedListForwardIterator<T>, LinkedListNode<T>> {
     using MySelf = DoubleLinkedListForwardIterator<T>;
-    using Parent = GeneralIterator<MySelf, DoubleLinkedListNode<T>>;
+    using Parent = GeneralIterator<MySelf, LinkedListNode<T>>;
 public:
     using Parent::Parent;
     DoubleLinkedListForwardIterator& operator++() {
-        Parent::m_ptr = static_cast<DoubleLinkedListNode<T> *>(Parent::m_ptr->m_pNext);
+        Parent::m_ptr = Parent::m_ptr->m_pNext;
         return *this;
     }
 };

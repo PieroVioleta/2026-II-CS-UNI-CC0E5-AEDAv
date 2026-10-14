@@ -202,7 +202,8 @@ template <typename NodePtrT>
 void LinkedList<Traits>::internalInsert(const value_type& value, Ref ref, NodePtrT& rParent) {
     if (rParent == nullptr || value < rParent->getValue()) {
         rParent = new Node(value, ref, rParent);
-        m_pTail = static_cast<NodePtr>(rParent);
+        if constexpr (is_same_v<NodePtrT, NodePtr>)
+            m_pTail = rParent;
         return;
     }
     internalInsert(value, ref, rParent->m_pNext);

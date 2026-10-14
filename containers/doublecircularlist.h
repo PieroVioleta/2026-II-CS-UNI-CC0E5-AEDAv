@@ -3,18 +3,18 @@
 #include "doublylist.h"
 
 template <typename T>
-class DoubleCircularForwardIterator : public GeneralIterator<DoubleCircularForwardIterator<T>, DoubleLinkedListNode<T>> {
-    using NodePtr = DoubleLinkedListNode<T> *;
+class DoubleCircularForwardIterator : public GeneralIterator<DoubleCircularForwardIterator<T>, LinkedListNode<T>> {
+    using NodePtr = LinkedListNode<T> *;
     NodePtr m_start;
 public:
-    using value_type        = DoubleLinkedListNode<T>;
+    using value_type        = LinkedListNode<T>;
     using MySelf            = DoubleCircularForwardIterator<T>;
     using Parent            = GeneralIterator<MySelf, value_type>;
 
     DoubleCircularForwardIterator(NodePtr ptr) : Parent(ptr), m_start(ptr) {}
 
     DoubleCircularForwardIterator& operator++() {
-        Parent::m_ptr = static_cast<NodePtr>(Parent::m_ptr->m_pNext);
+        Parent::m_ptr = Parent::m_ptr->m_pNext;
         if (Parent::m_ptr == m_start)
             Parent::m_ptr = nullptr;
         return *this;
@@ -59,9 +59,9 @@ public:
         lock_guard<mutex> lock(this->m_mutex);
         if (this->m_pRoot == nullptr)
             return;
-        NodePtr current = static_cast<NodePtr>(this->m_pRoot->m_pNext);
+        LinkedListNode<T> *current = this->m_pRoot->m_pNext;
         while (current != this->m_pRoot) {
-            NodePtr pNext = static_cast<NodePtr>(current->m_pNext);
+            LinkedListNode<T> *pNext = current->m_pNext;
             delete current;
             current = pNext;
         }
@@ -83,12 +83,7 @@ public:
         if (this->m_pTail)
             this->m_pTail->m_pNext = nullptr;
         Base::insert(value, ref);
-        lock_guard<mutex> lock(this->m_mutex);
-        NodePtr current = this->m_pRoot;
-        while (current->m_pNext != nullptr)
-            current = static_cast<NodePtr>(current->m_pNext);
-        current->m_pNext = this->m_pRoot;
-        this->m_pTail = current;
+        this->m_pTail->m_pNext = this->m_pRoot;
         this->m_pRoot->SetPrev(this->m_pTail);
     }
 };
