@@ -51,24 +51,22 @@ class DoubleLinkedList : public LinkedList<Traits> {
     using Base = LinkedList<Traits>;
 public:
     using value_type = typename Base::value_type;
-    using Node    = typename Base::Node;
-    using NodePtr = typename Base::NodePtr;
     using BackwardIterator = typename Traits::BackwardIterator;
 
     void push_back(const value_type& value, Ref ref) {
-        NodePtr pOldTail = this->m_pTail;
+        auto pOldTail = this->m_pTail;
         Base::push_back(value, ref);
         this->m_pTail->SetPrev(pOldTail);
     }
 
     void insert(const value_type& value, Ref ref) {
         Base::insert(value, ref);
-        NodePtr pPrev = nullptr;
-        NodePtr current = this->m_pRoot;
+        auto current = this->m_pRoot;
+        decltype(current) pPrev = nullptr;
         while (current != nullptr) {
             current->SetPrev(pPrev);
             pPrev = current;
-            current = static_cast<NodePtr>(current->m_pNext);
+            current = static_cast<decltype(current)>(current->m_pNext);
         }
         this->m_pTail = pPrev;
     }

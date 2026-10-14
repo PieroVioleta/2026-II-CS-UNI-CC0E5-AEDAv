@@ -48,12 +48,9 @@ struct DoubleCircularTraits : public DoubleLinkedListTraits<T> {
 
 template <typename T>
 class DoubleCircularLinkedList : public DoubleLinkedList<DoubleCircularTraits<T>> {
-    using Base    = DoubleLinkedList<DoubleCircularTraits<T>>;
-    using value_type = typename Base::value_type;
-    using Node    = typename Base::Node;
-    using NodePtr = typename Base::NodePtr;
+    using Base = DoubleLinkedList<DoubleCircularTraits<T>>;
 public:
-    void push_back(const value_type& value, Ref ref) {
+    void push_back(const T& value, Ref ref) {
         Base::push_back(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
         if (this->m_pTail) {
@@ -62,7 +59,7 @@ public:
         }
     }
 
-    void insert(const value_type& value, Ref ref) {
+    void insert(const T& value, Ref ref) {
         if (this->m_pTail)
             this->m_pTail->m_pNext = nullptr;
         Base::insert(value, ref);

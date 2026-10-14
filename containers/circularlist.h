@@ -28,24 +28,21 @@ struct CircularTraits : public LinkedListAscTraits<T> {
 
 template <typename T>
 class LC : public LinkedList<CircularTraits<T>> {
-    using Base    = LinkedList<CircularTraits<T>>;
-    using value_type = typename Base::value_type;
-    using Node    = typename Base::Node;
-    using NodePtr = typename Base::NodePtr;
+    using Base = LinkedList<CircularTraits<T>>;
 public:
-    void push_back(const value_type& value, Ref ref) {
+    void push_back(const T& value, Ref ref) {
         Base::push_back(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
         if (this->m_pTail)
             this->m_pTail->m_pNext = this->m_pRoot;
     }
 
-    void insert(const value_type& value, Ref ref) {
+    void insert(const T& value, Ref ref) {
         if (this->m_pTail)
             this->m_pTail->m_pNext = nullptr;
         Base::insert(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
-        NodePtr current = this->m_pRoot;
+        auto current = this->m_pRoot;
         while (current->m_pNext != nullptr)
             current = current->m_pNext;
         current->m_pNext = this->m_pRoot;
