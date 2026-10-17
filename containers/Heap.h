@@ -36,7 +36,20 @@ public:
             }
         }
     }
-    void HeapifyDown(size_t index);
+    void HeapifyDown(size_t index) {        
+        size_t n = m_data.size();
+        while (true) {
+            size_t left = 2 * index + 1, right = 2 * index + 2, best = index;
+            if (left < n && Compare()(m_data[left].getValue(), m_data[best].getValue()))
+                best = left;
+            if (right < n && Compare()(m_data[right].getValue(), m_data[best].getValue()))
+                best = right;
+            if (best == index)
+                break;
+            std::swap(m_data[index], m_data[best]);
+            index = best;
+        }
+    }
     Node pop() {
         if (m_data.empty()) return Node();
         std::swap(m_data[0], m_data[m_data.size() - 1]);
@@ -45,6 +58,8 @@ public:
         HeapifyDown(0);
         return top;
     }
+
+    bool empty() const { return m_data.empty(); }
 
     void clear() {
         m_data.clear();

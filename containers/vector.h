@@ -3,6 +3,7 @@
 #include <mutex>
 #include <initializer_list>
 #include "GeneralIterator.h"
+#include "GeneralTraits.h"
 #include "GeneralNode.h"
 #include "GeneralStreamable.h"
 #include "../foreach.h"
@@ -34,11 +35,17 @@ public:
 };
 
 template <typename T>
-struct VectorAscTraits {
-    using value_type        = T;
+struct VectorAscTraits : public AscendingTraits<T> {
     using Node              = GeneralNode<T>;
     using ForwardIterator   = VectorForwardIterator<Node>;  // itera sobre Node, no sobre T
     using BackwardIterator  = VectorBackwardIterator<Node>; // itera sobre Node, no sobre T
+};
+
+template <typename T>
+struct VectorDescTraits : public DescendingTraits<T> {
+    using Node              = GeneralNode<T>;
+    using ForwardIterator   = VectorForwardIterator<Node>;
+    using BackwardIterator  = VectorBackwardIterator<Node>;
 };
 
 template <typename Traits>
