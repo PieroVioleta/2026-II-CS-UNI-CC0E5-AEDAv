@@ -10,44 +10,6 @@
 #include "../types.h" // Ref
 using namespace std;
 
-template <typename T>
-class VectorForwardIterator : public GeneralIterator<VectorForwardIterator<T>, T> {
-public:
-    using value_type        = T;
-    using MySelf            = VectorForwardIterator<T>;
-    using Parent            = GeneralIterator<MySelf, T>;
-    using Parent::Parent; // Inherit constructor
-
-    // Prefix increment
-    VectorForwardIterator& operator++() { ++Parent::m_ptr; return *this; }
-};
-
-template <typename T>
-class VectorBackwardIterator : public GeneralIterator<VectorBackwardIterator<T>, T> {
-public:
-    using value_type        = T;
-    using MySelf            = VectorBackwardIterator<T>;
-    using Parent            = GeneralIterator<MySelf, T>;
-    using Parent::Parent; // Inherit constructor
-
-    // Prefix increment
-    VectorBackwardIterator& operator++() { --Parent::m_ptr; return *this; }
-};
-
-template <typename T>
-struct VectorAscTraits : public AscendingTraits<T> {
-    using Node              = GeneralNode<T>;
-    using ForwardIterator   = VectorForwardIterator<Node>;  // itera sobre Node, no sobre T
-    using BackwardIterator  = VectorBackwardIterator<Node>; // itera sobre Node, no sobre T
-};
-
-template <typename T>
-struct VectorDescTraits : public DescendingTraits<T> {
-    using Node              = GeneralNode<T>;
-    using ForwardIterator   = VectorForwardIterator<Node>;
-    using BackwardIterator  = VectorBackwardIterator<Node>;
-};
-
 template <typename Traits>
 class Vector : public Multi<Vector<Traits>, Printable, Readable> {
 public:

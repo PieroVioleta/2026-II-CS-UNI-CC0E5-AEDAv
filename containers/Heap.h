@@ -2,6 +2,7 @@
 #define __HEAP_H__
 #include "../types.h"
 #include "../foreach.h"
+#include "GeneralTraits.h"
 #include "vector.h"
 #include "GeneralStreamable.h"
 
@@ -15,12 +16,14 @@ public:
     using Compare           = typename Traits::Compare;
 private:
     Vector<Traits> m_data;
+    mutable std::mutex m_mutex;
 
 public:
     decltype(auto) begin() const { return m_data.begin(); }
     decltype(auto) end()   const { return m_data.end();   }
 
     void push_back(const value_type &value, Ref ref) {
+        lock_guard<mutex> lock(m_mutex);
         m_data.push_back(value, ref);
         HeapifyUp(m_data.size() - 1);
     }
@@ -51,6 +54,7 @@ public:
         }
     }
     Node pop() {
+        lock_guard<mutex> lock(m_mutex);
         if (m_data.empty()) return Node();
         std::swap(m_data[0], m_data[m_data.size() - 1]);
         Node top = m_data[m_data.size() - 1];
@@ -60,6 +64,8 @@ public:
     }
 
     bool empty() const { return m_data.empty(); }
+    size_t size() const { return m_data.size(); }
+    Node &operator[](size_t index) { return m_data[index]; }
 
     void clear() {
         m_data.clear();
@@ -67,14 +73,14 @@ public:
 
 };
 
-template <typename Traits>
-class MinHeap : public Heap<Traits> {
+template <typename T>
+class MinHeap : public Heap<MinHeapTraits<T>> {
 
 };
 
-template <typename Traits>
-class MaxHeap : public Heap<Traits> {
-    
+template <typename T>
+class MaxHeap : public Heap<MaxHeapTraits<T>> {
+
 };
 
 
