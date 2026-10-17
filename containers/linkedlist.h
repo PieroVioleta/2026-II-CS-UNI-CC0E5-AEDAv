@@ -4,7 +4,7 @@
 #include "GeneralTraits.h"
 #include "GeneralNode.h"
 #include "GeneralIterator.h"
-#include "GeneralStreamable.h"
+#include "GeneralContainer.h"
 #include "../foreach.h"
 
 template <typename T>
@@ -40,7 +40,7 @@ struct LinkedListDescTraits : public DescendingTraits<T> {
     using ForwardIterator   = LinkedListForwardIterator<T>;  // itera sobre Node, no sobre T
 };
 template <typename Traits>
-class LinkedList : public Multi<LinkedList<Traits>, Printable, Readable> {
+class LinkedList : public Multi<LinkedList<Traits>, Printable, Readable, Applicable> {
 public:
     using value_type        = typename Traits::value_type;
     using Node              = typename Traits::Node;
@@ -88,22 +88,7 @@ public:
     ForwardIterator begin() const { return ForwardIterator(m_pRoot); }
     ForwardIterator end() const { return ForwardIterator(nullptr); }
 
-    template <typename Func, typename... Args>
-    void ApplyFunction(Func func, Args... args) {
-        call(func, std::forward<Args>(args)...);
-    }
-    template <typename Func, typename... Args>
-    Node& FirstThat(Func func, Args... args) {
-        return call(func, std::forward<Args>(args)...);
-    }
-    template<typename Func, typename... Args>
-    decltype(auto) call(Func func, Args&&... args)
-    {    lock_guard<mutex> lock(m_mutex);
-        if constexpr(is_void_v<invoke_result_t<Func, Node&, Args...>>)
-            ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-        else // return type is not void:
-            return ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-    }
+    mutex &getMutex() { return m_mutex; }
 };
 
 

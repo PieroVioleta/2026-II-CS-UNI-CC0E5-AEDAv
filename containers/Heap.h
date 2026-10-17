@@ -4,10 +4,10 @@
 #include "../foreach.h"
 #include "GeneralTraits.h"
 #include "vector.h"
-#include "GeneralStreamable.h"
+#include "GeneralContainer.h"
 
 template <typename Traits>
-class Heap : public Multi<Heap<Traits>, Printable, Readable> {
+class Heap : public Multi<Heap<Traits>, Printable, Readable, Applicable> {
 
 public:
     using value_type        = typename Traits::value_type;
@@ -67,9 +67,30 @@ public:
     size_t size() const { return m_data.size(); }
     Node &operator[](size_t index) { return m_data[index]; }
 
+    template <typename Func, typename... Args>
+    void ApplyFunction(Func func, Args... args) {
+        call(func, std::forward<Args>(args)...);
+    }
+
+    template <typename Func, typename... Args>
+    Node &FirstThat(Func func, Args... args) {
+        return call(func, std::forward<Args>(args)...);
+    }
+
+    template <typename Func, typename... Args>
+    decltype(auto) call(Func func, Args&&... args) {
+        lock_guard<mutex> lock(m_mutex);
+        if constexpr (is_void_v<invoke_result_t<Func, Node &, Args...>>)
+            ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
+        else // return type is not void:
+            return ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
+    }
+
     void clear() {
         m_data.clear();
     }
+
+    mutex &getMutex() { return m_mutex; }
 
 };
 

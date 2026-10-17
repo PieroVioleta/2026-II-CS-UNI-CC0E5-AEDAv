@@ -5,13 +5,13 @@
 #include "GeneralIterator.h"
 #include "GeneralTraits.h"
 #include "GeneralNode.h"
-#include "GeneralStreamable.h"
+#include "GeneralContainer.h"
 #include "../foreach.h"
 #include "../types.h" // Ref
 using namespace std;
 
 template <typename Traits>
-class Vector : public Multi<Vector<Traits>, Printable, Readable> {
+class Vector : public Multi<Vector<Traits>, Printable, Readable, Applicable> {
 public:
     using value_type        = Traits::value_type;
     using Node              = Traits::Node;
@@ -131,33 +131,7 @@ public:
         // Implementation for reading vector from stream
     }
 
-    template <typename Func, typename... Args>
-    void ApplyFunction(Func func, Args... args) {
-        call(func, std::forward<Args>(args)...);
-    }
-    template <typename Func, typename... Args>
-    Node& FirstThat(Func func, Args... args) {
-        return call(func, std::forward<Args>(args)...);
-    }
-    template<typename Func, typename... Args>
-    decltype(auto) call(Func func, Args&&... args)
-    {    lock_guard<mutex> lock(m_mutex);
-        if constexpr(is_void_v<invoke_result_t<Func, Node&, Args...>>)
-            ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-        else // return type is not void:
-            return ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-    }
-
-    // Igual que call(), pero recorriendo el container en sentido inverso
-    // (rbegin()/rend()) en vez de hacia adelante.
-    template<typename Func, typename... Args>
-    decltype(auto) rcall(Func func, Args&&... args)
-    {    lock_guard<mutex> lock(m_mutex);
-        if constexpr(is_void_v<invoke_result_t<Func, Node&, Args...>>)
-            ::call(rbegin(), rend(), std::forward<Func>(func), std::forward<Args>(args)...);
-        else // return type is not void:
-            return ::call(rbegin(), rend(), std::forward<Func>(func), std::forward<Args>(args)...);
-    }
+    mutex &getMutex() { return m_mutex; }
 };
 
 #endif // __VECTOR_H__
