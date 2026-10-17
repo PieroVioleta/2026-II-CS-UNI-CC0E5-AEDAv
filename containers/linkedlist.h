@@ -3,6 +3,7 @@
 #include <mutex>
 #include "GeneralNode.h"
 #include "GeneralIterator.h"
+#include "GeneralStreamable.h"
 #include "../foreach.h"
 
 template <typename T>
@@ -48,7 +49,7 @@ struct LinkedListDescTraits : public DescendingTraits<T> {
     using ForwardIterator   = LinkedListForwardIterator<T>;  // itera sobre Node, no sobre T
 };
 template <typename Traits>
-class LinkedList {
+class LinkedList : public Multi<LinkedList<Traits>, Printable, Readable> {
 public:
     using value_type        = typename Traits::value_type;
     using Node              = typename Traits::Node;
@@ -90,38 +91,6 @@ public:
     std::ostream& write(std::ostream& os) { return os << *this; }
     std::istream& read(std::istream& is) { return is >> *this; }
 
-    friend std::ostream& operator <<(std::ostream& os, const LinkedList<Traits>& list) {
-        lock_guard lock(list.m_mutex);
-        auto first = true;
-        os << "[";
-        for (auto it = list.begin(); it != list.end(); ++it){
-            if (!first)
-                os << ",";
-            os << *it;
-            first = false;
-        }
-        return os << "]";
-    }
-    
-    friend std::istream &operator >>(std::istream &is, LinkedList<Traits> &list) {
-        Delim d;
-        Node node;
-        list.clear();
-
-        is >> d;
-        if (is >> d && d != ']'){
-            is.unget();
-            while(is >> node >> d){
-                list.push_back(node.getValue(), node.getRef());
-                if (d == ']'){
-                    break;
-                }
-            }    
-        }
-
-        return is; 
-    }
-    
     // Iterators
     // ForwardIterator begin() { return ForwardIterator(m_pRoot); }
     // ForwardIterator end() { return ForwardIterator(nullptr); }
@@ -148,10 +117,10 @@ public:
 
 
 template <typename Traits>
-LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>& other){ 
+LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>& other){
     clear();
     if(!other.m_pRoot)
-        return;
+        return *this;
     std::lock_guard<std::mutex> lock(other.m_mutex);
 
     m_pRoot = new Node(other.GetRoot()->getValue(), other.GetRoot()->getRef(), nullptr);

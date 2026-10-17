@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include "GeneralIterator.h"
 #include "GeneralNode.h"
+#include "GeneralStreamable.h"
 #include "../foreach.h"
 #include "../types.h" // Ref
 using namespace std;
@@ -41,7 +42,7 @@ struct VectorAscTraits {
 };
 
 template <typename Traits>
-class Vector {
+class Vector : public Multi<Vector<Traits>, Printable, Readable> {
 public:
     using value_type        = Traits::value_type;
     using Node              = Traits::Node;
@@ -139,8 +140,8 @@ public:
         m_capacity = 0;
     }
 
-    ForwardIterator   begin() { return ForwardIterator(m_data); }
-    ForwardIterator   end()   { return ForwardIterator(m_data + m_size); }
+    ForwardIterator   begin() const { return ForwardIterator(m_data); }
+    ForwardIterator   end()   const { return ForwardIterator(m_data + m_size); }
     BackwardIterator rbegin() { return BackwardIterator(m_data + m_size - 1); }
     BackwardIterator rend()   { return BackwardIterator(m_data - 1); }
 
@@ -189,15 +190,5 @@ public:
             return ::call(rbegin(), rend(), std::forward<Func>(func), std::forward<Args>(args)...);
     }
 };
-
-template <typename T>
-ostream& operator<<(ostream &os, Vector<T> &vec) {
-    return vec.write(os);
-}
-
-template <typename T>
-istream& operator>>(istream &is, Vector<T> &vec) {
-    return vec.read(is);
-}
 
 #endif // __VECTOR_H__

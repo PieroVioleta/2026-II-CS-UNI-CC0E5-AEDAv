@@ -1,32 +1,27 @@
 #ifndef __HEAP_H__
 #define __HEAP_H__
+#include "../types.h"
+#include "../foreach.h"
+#include "vector.h"
+#include "GeneralStreamable.h"
 
 template <typename Traits>
-class Heap {
-    
+class Heap : public Multi<Heap<Traits>, Printable, Readable> {
+
 public:
     using value_type        = typename Traits::value_type;
     using Node              = typename Traits::Node;
     using NodePtr           = Node *;
     using Compare           = typename Traits::Compare;
 private:
-    Vector<Node> m_data;
-    decltype(auto) begin() { return m_data.begin(); }
-    decltype(auto) end()   { return m_data.end();   }
+    Vector<Traits> m_data;
 
 public:
-    friend ostream &operator <<(ostream &os, const Heap<Traits> &heap) {
-        os << "[";
-        for (auto it = heap.begin(); it != heap.end(); ++it) {
-            os << *it;
-            if (std::next(it) != heap.end()) {
-                os << ", ";
-            }
-        }
-        return os << "]";
-    }
-    void push(const value_type &value, Ref ref) {
-        m_data.push_back(Node(value));
+    decltype(auto) begin() const { return m_data.begin(); }
+    decltype(auto) end()   const { return m_data.end();   }
+
+    void push_back(const value_type &value, Ref ref) {
+        m_data.push_back(value, ref);
         HeapifyUp(m_data.size() - 1);
     }
 
@@ -41,11 +36,18 @@ public:
             }
         }
     }
+    void HeapifyDown(size_t index);
     Node pop() {
-        if (m_data.empty()) return;
+        if (m_data.empty()) return Node();
         std::swap(m_data[0], m_data[m_data.size() - 1]);
+        Node top = m_data[m_data.size() - 1];
         m_data.pop_back();
         HeapifyDown(0);
+        return top;
+    }
+
+    void clear() {
+        m_data.clear();
     }
 
 };
