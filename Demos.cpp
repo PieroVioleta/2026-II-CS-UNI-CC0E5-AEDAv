@@ -1,12 +1,14 @@
 
 #include <iostream>
 #include <fstream> // ofstream para escribir en archivo
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
 #include "foreach.h"
 #include "containers/vector.h"
 #include "containers/linkedlist.h"
+#include "containers/Heap.h"
 #include "Demos.h"
 using namespace std;
 
@@ -218,4 +220,61 @@ void DemoLinkedList()
     in.close();
     cout << "LinkedList leida desde archivo: " << new_list << endl;
     TestForwardTraversal(new_list);
+}
+
+void DemoHeap()
+{
+    // uso
+    MinHeap<TX> minHeap;
+    MaxHeap<TX> maxHeap;
+    vector<pair<TX, Ref>> values = {{5, 50}, {1, 10}, {8, 80}, {3, 30}, {9, 90}, {2, 20}, {7, 70}, {4, 40}, {6, 60}};
+    InsertElements(minHeap, values);
+    InsertElements(maxHeap, values);
+    cout << "MinHeap (raiz = menor): " << minHeap << endl;
+    cout << "MaxHeap (raiz = mayor): " << maxHeap << endl;
+
+    cout << "Recorrido MinHeap: ";
+    minHeap.call(PrintNode<MinHeap<TX>::Node>, cout);
+    cout << endl;
+
+    minHeap.ApplyFunction(AddOne);
+    maxHeap.ApplyFunction(AddOne);
+    cout << "MinHeap tras ApplyFunction(AddOne): " << minHeap << endl;
+    cout << "MaxHeap tras ApplyFunction(AddOne): " << maxHeap << endl;
+
+    // persistencia
+    stringstream ss;
+    ss << minHeap;
+    cout << "MinHeap write: " << ss.str() << endl;
+    MinHeap<TX> copia;
+    ss >> copia;
+    cout << "MinHeap read:  " << copia << endl;
+
+    // concurrencia
+    MinHeap<TX> concurrente;
+    const int NThreads = 4, N = 250;
+    vector<thread> workers;
+    for (int t = 0; t < NThreads; ++t) {
+        workers.emplace_back([&concurrente, t, N]() {
+            for (int i = 0; i < N; ++i)
+                concurrente.push_back(t * N + i, (t * N + i) * 10);
+        });
+    }
+    for (auto &worker : workers)
+        worker.join();
+
+    bool ok = true;
+    for (size_t i = 1; i < concurrente.size() && ok; ++i)
+        if (concurrente[i].getValue() < concurrente[(i - 1) / 2].getValue())
+            ok = false;
+
+    long long suma = 0, esperada = 0;
+    while (!concurrente.empty()) {
+        suma += concurrente.pop().getValue();
+    }
+    for (int v = 0; v < NThreads * N; ++v)
+        esperada += v;
+
+    cout << "MinHeap concurrencia: " << NThreads * N << " inserciones, propiedad heap "
+         << (ok ? "OK" : "ROTO") << ", suma " << (suma == esperada ? "integra" : "PERDIDA") << endl;
 }
