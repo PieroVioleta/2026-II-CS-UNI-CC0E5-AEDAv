@@ -84,4 +84,14 @@ public:
     }
 };
 
+template <typename Container, typename Func, typename... Args>
+decltype(auto) rcall(Container &c, Func func, Args&&... args)
+requires requires { c.rbegin(); } {
+    lock_guard<mutex> lock(c.getMutex());
+    if constexpr (is_void_v<invoke_result_t<Func, typename Container::Node &, Args...>>)
+        ::call(c.rbegin(), c.rend(), std::forward<Func>(func), std::forward<Args>(args)...);
+    else
+        return ::call(c.rbegin(), c.rend(), std::forward<Func>(func), std::forward<Args>(args)...);
+}
+
 #endif // __GENERAL_CONTAINER_H__

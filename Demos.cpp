@@ -368,6 +368,9 @@ void DemoDoubleLinkedList()
     for (auto it = list.rbegin(); it != list.rend(); ++it)
         cout << *it << " ";
     cout << endl;
+
+    rcall(list, AddX<TX>, TX(10));
+    cout << "DoubleLinkedList tras rcall(AddX, 10):  " << list << endl;
 }
 
 void DemoDoubleCircularLinkedList()
@@ -394,4 +397,7 @@ void DemoDoubleCircularLinkedList()
     for (auto it = list.rbegin(); it != list.rend(); ++it)
         cout << *it << " ";
     cout << endl;
+
+    rcall(list, AddX<TX>, TX(10));
+    cout << "DCL tras rcall(AddX, 10):       " << list << endl;
 }
