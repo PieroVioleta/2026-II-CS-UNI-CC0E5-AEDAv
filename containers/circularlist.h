@@ -38,7 +38,7 @@ public:
 
     void insert(const T& value, Ref ref) {
         this->openRing();
-        Base::insert(value, ref); // la base mantiene m_pTail correctamente
+        Base::insert(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
         this->closeRing();
     }

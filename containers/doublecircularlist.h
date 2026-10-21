@@ -3,8 +3,6 @@
 #include "doublylist.h"
 #include "circularlist.h"
 
-// el recorrido forward de una lista doble-circular es identico al de la lista
-// circular (avanza por m_pNext con deteccion de vuelta al inicio), se reutiliza
 template <typename T>
 using DoubleCircularForwardIterator = CircularForwardIterator<T>;
 
@@ -46,7 +44,7 @@ public:
 
     void insert(const T& value, Ref ref) {
         this->openRing();
-        Base::insert(value, ref); // repara los m_pPrev y mantiene m_pTail
+        Base::insert(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
         this->closeRing();
         this->m_pRoot->SetPrev(this->m_pTail);

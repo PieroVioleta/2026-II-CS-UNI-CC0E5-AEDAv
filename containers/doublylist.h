@@ -15,8 +15,6 @@ public:
     void SetPrev(DoubleLinkedListNode *pPrev) { m_pPrev = pPrev; }
 };
 
-// el recorrido forward de una lista doble es identico al de la lista simple
-// (avanza por m_pNext sobre LinkedListNode), se reutiliza la implementacion
 template <typename T>
 using DoubleLinkedListForwardIterator = LinkedListForwardIterator<T>;
 
