@@ -56,6 +56,11 @@ protected:
     Compare m_comp; // comparador para ordenar los nodos de la lista
     mutable std::mutex m_mutex; // mutex para sincronización
 
+    // apertura/cierre del anillo: permiten que las listas circulares (LC,
+    // DoubleCircularLinkedList) reutilicen las operaciones lineales de la base
+    void openRing() { if (m_pTail) m_pTail->m_pNext = nullptr; }
+    void closeRing() { if (m_pTail) m_pTail->m_pNext = m_pRoot; }
+
     template <typename NodePtrT>
     void internalInsert(const value_type& value, Ref ref, NodePtrT& rParent);
 
@@ -117,11 +122,14 @@ LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>& othe
 template <typename Traits>
 void LinkedList<Traits>::clear(){
     lock_guard<mutex> lock(m_mutex);
+    // las listas circulares derivadas dejan m_pTail->m_pNext == m_pRoot; se rompe
+    // el anillo para que el recorrido hasta nullptr termine (clear() es virtual y
+    // también se invoca desde el destructor de la base)
     if (m_pTail != nullptr)
         m_pTail->m_pNext = nullptr;
-    LinkedListNode<value_type> *current = m_pRoot;
+    NodePtr current = m_pRoot;
     while (current != nullptr) {
-        LinkedListNode<value_type> *pNext = current->m_pNext;
+        NodePtr pNext = static_cast<NodePtr>(current->m_pNext); // todos los nodos son del tipo de Traits
         delete current;
         current = pNext;
     }
@@ -151,9 +159,10 @@ template <typename Traits>
 template <typename NodePtrT>
 void LinkedList<Traits>::internalInsert(const value_type& value, Ref ref, NodePtrT& rParent) {
     if (rParent == nullptr || value < rParent->getValue()) {
-        rParent = new Node(value, ref, rParent);
-        if constexpr (is_same_v<NodePtrT, NodePtr>)
-            m_pTail = rParent;
+        NodePtr newNode = new Node(value, ref, rParent);
+        rParent = newNode;
+        if (newNode->m_pNext == nullptr) // sin siguiente => nuevo tail (lista vacia o insercion al final)
+            m_pTail = newNode;
         return;
     }
     internalInsert(value, ref, rParent->m_pNext);

@@ -15,17 +15,10 @@ public:
     void SetPrev(DoubleLinkedListNode *pPrev) { m_pPrev = pPrev; }
 };
 
+// el recorrido forward de una lista doble es identico al de la lista simple
+// (avanza por m_pNext sobre LinkedListNode), se reutiliza la implementacion
 template <typename T>
-class DoubleLinkedListForwardIterator : public GeneralIterator<DoubleLinkedListForwardIterator<T>, LinkedListNode<T>> {
-    using MySelf = DoubleLinkedListForwardIterator<T>;
-    using Parent = GeneralIterator<MySelf, LinkedListNode<T>>;
-public:
-    using Parent::Parent;
-    DoubleLinkedListForwardIterator& operator++() {
-        Parent::m_ptr = Parent::m_ptr->m_pNext;
-        return *this;
-    }
-};
+using DoubleLinkedListForwardIterator = LinkedListForwardIterator<T>;
 
 template <typename T>
 class DoubleLinkedListBackwardIterator : public GeneralIterator<DoubleLinkedListBackwardIterator<T>, DoubleLinkedListNode<T>> {

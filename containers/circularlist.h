@@ -33,20 +33,14 @@ public:
     void push_back(const T& value, Ref ref) {
         Base::push_back(value, ref);
         lock_guard<mutex> lock(this->m_mutex);
-        if (this->m_pTail)
-            this->m_pTail->m_pNext = this->m_pRoot;
+        this->closeRing();
     }
 
     void insert(const T& value, Ref ref) {
-        if (this->m_pTail)
-            this->m_pTail->m_pNext = nullptr;
-        Base::insert(value, ref);
+        this->openRing();
+        Base::insert(value, ref); // la base mantiene m_pTail correctamente
         lock_guard<mutex> lock(this->m_mutex);
-        auto current = this->m_pRoot;
-        while (current->m_pNext != nullptr)
-            current = current->m_pNext;
-        current->m_pNext = this->m_pRoot;
-        this->m_pTail = current;
+        this->closeRing();
     }
 };
 

@@ -50,14 +50,7 @@ classDiagram
         -NodePtr m_start
         +operator++()
     }
-    class DoubleLinkedListForwardIterator~T~ {
-        +operator++()
-    }
     class DoubleLinkedListBackwardIterator~T~ {
-        +operator++()
-    }
-    class DoubleCircularForwardIterator~T~ {
-        -NodePtr m_start
         +operator++()
     }
     class DoubleCircularBackwardIterator~T~ {
@@ -68,11 +61,15 @@ classDiagram
     GeneralIterator~Derived,T~ <|-- VectorBackwardIterator~T~
     GeneralIterator~Derived,T~ <|-- LinkedListForwardIterator~T~
     GeneralIterator~Derived,T~ <|-- CircularForwardIterator~T~
-    GeneralIterator~Derived,T~ <|-- DoubleLinkedListForwardIterator~T~
     GeneralIterator~Derived,T~ <|-- DoubleLinkedListBackwardIterator~T~
-    GeneralIterator~Derived,T~ <|-- DoubleCircularForwardIterator~T~
     GeneralIterator~Derived,T~ <|-- DoubleCircularBackwardIterator~T~
 ```
+
+> **Nota:** `DoubleLinkedListForwardIterator<T>` es un alias de
+> `LinkedListForwardIterator<T>`, y `DoubleCircularForwardIterator<T>` un alias
+> de `CircularForwardIterator<T>`: el recorrido forward de la lista doble y de
+> la doble-circular es idéntico al de sus versiones simples, por lo que se
+> reutiliza la implementación en lugar de duplicar clases.
 
 ## 3 · Contenedores
 
@@ -93,8 +90,9 @@ classDiagram
         #Compare m_comp
         #mutable mutex m_mutex
         +push_back() virtual
-        +insert() : internalInsert (template + if constexpr)
+        +insert() : internalInsert (recursivo, mantiene m_pTail)
         +clear() virtual
+        +openRing() / closeRing() : para listas circulares
         +operator<</operator>>
         +call() / FirstThat() / ApplyFunction()
         +GetRoot()
