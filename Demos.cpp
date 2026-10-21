@@ -12,6 +12,7 @@
 #include "containers/circularlist.h"
 #include "containers/doublylist.h"
 #include "containers/doublecircularlist.h"
+#include "containers/binarytree.h"
 #include "Demos.h"
 using namespace std;
 
@@ -400,4 +401,70 @@ void DemoDoubleCircularLinkedList()
 
     rcall(list, AddX<TX>, TX(10));
     cout << "DCL tras rcall(AddX, 10):       " << list << endl;
+}
+
+void DemoBinaryTree()
+{
+    // uso
+    BinaryTree<BinaryTreeTraits<TX>> tree;
+    tree.insert(5, 50);
+    tree.insert(1, 10);
+    tree.insert(8, 80);
+    tree.insert(3, 30);
+    tree.insert(9, 90);
+    tree.insert(2, 20);
+    tree.insert(7, 70);
+    cout << "BinaryTree (in-order, ordenado): " << tree << endl;
+
+    // bucle con iteradores
+    cout << "Recorrido in-order: ";
+    for (auto it = tree.begin(); it != tree.end(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+    // backward
+    cout << "Recorrido backward: ";
+    for (auto it = tree.rbegin(); it != tree.rend(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+    // persistencia
+    stringstream ss;
+    ss << tree;
+    cout << "BinaryTree write: " << ss.str() << endl;
+
+    BinaryTree<BinaryTreeTraits<TX>> copia;
+    ss >> copia;
+    cout << "BinaryTree read:  " << copia << endl;
+
+    // call
+    tree.ApplyFunction(AddOne);
+    cout << "BinaryTree tras ApplyFunction(AddOne): " << tree << endl;
+
+    tree.call(AddX<TX>, TX(10));
+    cout << "BinaryTree tras call(AddX, 10):        " << tree << endl;
+
+    rcall(tree, Square);
+    cout << "BinaryTree tras rcall(Square):         " << tree << endl;
+
+    cout << "BinaryTree FirstThat(>50): " << tree.FirstThat([](GeneralNode<TX> &n){ return n.getValue() > 50; }) << endl;
+
+    // concurrencia
+    tree.clear();
+    const int NThreads = 4;
+    vector<thread> workers;
+    for (int t = 0; t < NThreads; ++t) {
+        workers.emplace_back([&tree, t]() {
+            for (int i = 0; i < 100; ++i)
+                tree.insert(t * 100 + i, t * 1000 + i);
+        });
+    }
+    for (auto &worker : workers)
+        worker.join();
+
+    size_t count = 0;
+    auto it = tree.begin();
+    while (it != tree.end()) { ++count; ++it; }
+    cout << "BinaryTree concurrencia: " << NThreads * 100 << " inserciones, in-order "
+         << (count == size_t(NThreads * 100) ? "integro" : "ROTO") << " (" << count << " nodos)" << endl;
 }
