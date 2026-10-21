@@ -22,65 +22,6 @@ public:
 
 };
 
-template <typename T>
-class BinaryTreeForwardIterator : public GeneralIterator<BinaryTreeForwardIterator<T>, BinaryTreeNode<T>> {
-    using NodePtr = BinaryTreeNode<T> *;
-public:
-    using MySelf            = BinaryTreeForwardIterator<T>;
-    using Parent            = GeneralIterator<MySelf, BinaryTreeNode<T>>;
-    using Parent::Parent;
-    BinaryTreeForwardIterator& operator++() {
-        NodePtr p = Parent::m_ptr;
-        if (p->m_pChild[1]) {
-            p = p->m_pChild[1];
-            while (p->m_pChild[0])
-                p = p->m_pChild[0];
-        } else {
-            NodePtr parent = p->m_pParent;
-            while (parent && p == parent->m_pChild[1]) {
-                p = parent;
-                parent = parent->m_pParent;
-            }
-            p = parent;
-        }
-        Parent::m_ptr = p;
-        return *this;
-    }
-};
-
-template <typename T>
-class BinaryTreeBackwardIterator : public GeneralIterator<BinaryTreeBackwardIterator<T>, BinaryTreeNode<T>> {
-    using NodePtr = BinaryTreeNode<T> *;
-public:
-    using MySelf            = BinaryTreeBackwardIterator<T>;
-    using Parent            = GeneralIterator<MySelf, BinaryTreeNode<T>>;
-    using Parent::Parent;
-    BinaryTreeBackwardIterator& operator++() {
-        NodePtr p = Parent::m_ptr;
-        if (p->m_pChild[0]) {
-            p = p->m_pChild[0];
-            while (p->m_pChild[1])
-                p = p->m_pChild[1];
-        } else {
-            NodePtr parent = p->m_pParent;
-            while (parent && p == parent->m_pChild[0]) {
-                p = parent;
-                parent = parent->m_pParent;
-            }
-            p = parent;
-        }
-        Parent::m_ptr = p;
-        return *this;
-    }
-};
-
-template <typename T>
-struct BinaryTreeTraits : public AscendingTraits<T> {
-    using Node              = BinaryTreeNode<T>;
-    using ForwardIterator   = BinaryTreeForwardIterator<T>;
-    using BackwardIterator  = BinaryTreeBackwardIterator<T>;
-};
-
 template <typename Traits>
 class BinaryTree : public Multi<BinaryTree<Traits>, Printable, Readable, Applicable> {
 public:
@@ -89,19 +30,21 @@ public:
     using NodePtr           = Node *;
     using ForwardIterator   = typename Traits::ForwardIterator;
     using BackwardIterator  = typename Traits::BackwardIterator;
+    using Compare           = typename Traits::Compare;
 
 private:
     NodePtr m_root = nullptr; // root of the binary tree
     mutable std::mutex m_mutex; // mutex para sincronización
+    Compare m_comp; // comparador para ordenar los nodos del arbol
 
-    void internal_insert(NodePtr& node, const value_type& value, Ref ref) {
+    void internal_insert(NodePtr& node, const value_type& value, Ref ref, NodePtr parent = nullptr) {
         if (!node) {
             node = new Node(value, ref);
+            node->m_pParent = parent;
             return;
         }
-        auto branch = node->getValue() < value;
-        internal_insert(node->m_pChild[branch], value, ref); // Tail recursion to insert in the correct branch
-        node->m_pChild[branch]->m_pParent = node;
+        auto branch = m_comp(node->getValue(), value);
+        internal_insert(node->m_pChild[branch], value, ref, node); // Tail recursion to insert in the correct branch
     }
     void internal_clear(NodePtr& node) {
         if (!node)
