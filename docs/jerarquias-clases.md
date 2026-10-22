@@ -112,27 +112,26 @@ classDiagram
     class LinkedList~Traits~ {
         #NodePtr m_pRoot, m_pTail
         #Compare m_comp
+        #bool m_circular
         #mutable mutex m_mutex
         +push_back() virtual
-        +insert() : internalInsert (template + if constexpr)
+        +insert() : openRing → internalInsert → updateLinks
         +clear() virtual
-        +openRing() / closeRing() : para listas circulares
+        +updateLinks() virtual : reparacion tras cada mutacion
+        +openRing() / closeRing()
         +operator<</operator>>
         +call() / FirstThat() / ApplyFunction()
         +GetRoot()
     }
-    class LC~T~ {
-        +push_back() : base + cerrar anillo
-        +insert() : abrir anillo → base → recerrar
+    class CircularLinkedList~T~ {
+        ctor : activa m_circular
     }
     class DoubleLinkedList~Traits~ {
-        +push_back() : base + prev
-        +insert() : base + repair walk
+        +updateLinks() : anillo + walk de m_pPrev
         +rbegin() / rend()
     }
-    class DoubleCircularLinkedList~T~ {
-        +push_back() : base LDE + cerrar anillo
-        +insert() : abrir anillo → LDE → recerrar
+    class DoubleLinkedCircularList~T~ {
+        ctor : activa m_circular
     }
     class Heap~Traits~ {
         -Vector~Traits~ m_data
@@ -162,9 +161,9 @@ classDiagram
         +rbegin()/rend() : in-order inverso
         +getMutex()
     }
-    LinkedList~Traits~ <|-- LC~T~ : LinkedList~CircularTraits~T~~
+    LinkedList~Traits~ <|-- CircularLinkedList~T~ : LinkedList~CircularTraits~T~~
     LinkedList~Traits~ <|-- DoubleLinkedList~Traits~ : DoubleLinkedListTraits
-    DoubleLinkedList~Traits~ <|-- DoubleCircularLinkedList~T~ : DoubleLinkedList~DoubleCircularTraits~T~~
+    DoubleLinkedList~Traits~ <|-- DoubleLinkedCircularList~T~ : DoubleLinkedList~DoubleCircularTraits~T~~
     Heap~Traits~ <|-- MinHeap~T~ : Heap~MinHeapTraits~T~~
     Heap~Traits~ <|-- MaxHeap~T~ : Heap~MaxHeapTraits~T~~
 ```
@@ -275,7 +274,7 @@ classDiagram
 > `Multi<Contenedor<Traits>, Printable, Readable, Applicable>` y las clases
 > derivadas la heredan de su base. `::rcall` es libre y opera sobre el tipo
 > real del contenedor, por lo que también sirve para derivadas con
-> `rbegin` (DLL, DCL, BinaryTree).
+> `rbegin` (DLL, DoubleLinkedCircularList, BinaryTree).
 
 ## 6 · Composición
 
@@ -287,16 +286,19 @@ classDiagram
     class LinkedList~LinkedListAscTraits~ {
         usa: LinkedListNode
     }
-    class LC~CircularTraits~ {
+    class CircularLinkedList~CircularTraits~ {
         hereda de: LinkedList
+        solo activa m_circular
         usa: CircularForwardIterator
     }
     class DoubleLinkedList~DoubleLinkedListTraits~ {
         hereda de: LinkedList
         usa: DoubleLinkedListNode
+        repara: m_pPrev via updateLinks
     }
-    class DoubleCircularLinkedList~DoubleCircularTraits~ {
+    class DoubleLinkedCircularList~DoubleCircularTraits~ {
         hereda de: DoubleLinkedList
+        solo activa m_circular
         usa: iteradores circulares
     }
     class Heap~Traits~ {
@@ -321,18 +323,18 @@ classDiagram
     }
     Vector~VectorAscTraits~ *-- GeneralNode~T~ : almacena
     LinkedList~LinkedListAscTraits~ *-- LinkedListNode~T~ : almacena
-    LC~CircularTraits~ ..|> LinkedList~LinkedListAscTraits~
+    CircularLinkedList~CircularTraits~ ..|> LinkedList~LinkedListAscTraits~
     DoubleLinkedList~DoubleLinkedListTraits~ ..|> LinkedList~LinkedListAscTraits~
-    DoubleCircularLinkedList~DoubleCircularTraits~ ..|> DoubleLinkedList~DoubleLinkedListTraits~
+    DoubleLinkedCircularList~DoubleCircularTraits~ ..|> DoubleLinkedList~DoubleLinkedListTraits~
     Heap~Traits~ *-- Vector~Traits~ : m_data
     MinHeap~MinHeapTraits~ ..|> Heap~Traits~
     MaxHeap~MaxHeapTraits~ ..|> Heap~Traits~
     BinaryTree~BinaryTreeTraits~ *-- BinaryTreeNode~T~ : almacena
     Vector~VectorAscTraits~ ..> foreach_h
     LinkedList~LinkedListAscTraits~ ..> foreach_h
-    LC~CircularTraits~ ..> foreach_h
+    CircularLinkedList~CircularTraits~ ..> foreach_h
     DoubleLinkedList~DoubleLinkedListTraits~ ..> foreach_h
-    DoubleCircularLinkedList~DoubleCircularTraits~ ..> foreach_h
+    DoubleLinkedCircularList~DoubleCircularTraits~ ..> foreach_h
     Heap~Traits~ ..> foreach_h
     BinaryTree~BinaryTreeTraits~ ..> foreach_h
     Vector~VectorAscTraits~ ..> GeneralContainer_h

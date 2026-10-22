@@ -7,11 +7,11 @@
 #include <vector>
 #include "foreach.h"
 #include "containers/vector.h"
-#include "containers/linkedlist.h"
+#include "containers/LinkedList.h"
 #include "containers/Heap.h"
-#include "containers/circularlist.h"
-#include "containers/doublylist.h"
-#include "containers/doublecircularlist.h"
+#include "containers/CircularLinkedList.h"
+#include "containers/DoubleLinkedList.h"
+#include "containers/DoubleLinkedCircularList.h"
 #include "containers/binarytree.h"
 #include "Demos.h"
 using namespace std;
@@ -286,14 +286,14 @@ void DemoHeap()
 void DemoCircularLinkedList()
 {
     // uso
-    LC<TX> list;
+    CircularLinkedList<TX> list;
     list.push_back(3, 30);
     list.push_back(1, 10);
     list.push_back(2, 20);
-    cout << "LC luego de push_back x3: " << list << endl;
+    cout << "CircularLinkedList luego de push_back x3: " << list << endl;
 
     list.insert(2, 25);
-    cout << "LC luego de insert(2,25): " << list << endl;
+    cout << "CircularLinkedList luego de insert(2,25): " << list << endl;
 
     // bucle nativo
     cout << "Bucle nativo sobre el anillo: ";
@@ -307,25 +307,25 @@ void DemoCircularLinkedList()
     // persistencia
     stringstream ss;
     list.write(ss);
-    cout << "LC write: " << ss.str() << endl;
+    cout << "CircularLinkedList write: " << ss.str() << endl;
 
-    LC<TX> copy;
+    CircularLinkedList<TX> copy;
     ss >> copy;
-    cout << "LC read:  " << copy << endl;
+    cout << "CircularLinkedList read:  " << copy << endl;
 
     // call
     list.ApplyFunction(AddOne);
-    cout << "LC tras ApplyFunction(AddOne): " << list << endl;
+    cout << "CircularLinkedList tras ApplyFunction(AddOne): " << list << endl;
 
     list.call(AddX<TX>, TX(10));
-    cout << "LC tras call(AddX, 10):        " << list << endl;
+    cout << "CircularLinkedList tras call(AddX, 10):        " << list << endl;
 
-    cout << "LC FirstThat(>5): " << list.FirstThat([](GeneralNode<TX> &n){ return n.getValue() > 5; }) << endl;
+    cout << "CircularLinkedList FirstThat(>5): " << list.FirstThat([](GeneralNode<TX> &n){ return n.getValue() > 5; }) << endl;
 
     try {
         list.FirstThat([](GeneralNode<TX> &n){ return n.getValue() > 100; });
     } catch (const runtime_error &e) {
-        cout << "LC FirstThat sin match: " << e.what() << endl;
+        cout << "CircularLinkedList FirstThat sin match: " << e.what() << endl;
     }
 
     // concurrencia
@@ -348,7 +348,7 @@ void DemoCircularLinkedList()
         p = p->m_pNext;
     } while (p != list.GetRoot());
 
-    cout << "LC concurrencia: " << NThreads * 100 << " inserciones, el anillo quedo con "
+    cout << "CircularLinkedList concurrencia: " << NThreads * 100 << " inserciones, el anillo quedo con "
          << count << " nodos" << (count == NThreads * 100 ? " (integro)" : " (ROTO)") << endl;
 }
 
@@ -377,21 +377,21 @@ void DemoDoubleLinkedList()
 void DemoDoubleCircularLinkedList()
 {
     // uso
-    DoubleCircularLinkedList<TX> list;
+    DoubleLinkedCircularList<TX> list;
     list.push_back(3, 30);
     list.push_back(1, 10);
     list.push_back(2, 20);
     list.insert(0, 5);
-    cout << "DCL luego de push_back e insert: " << list << endl;
+    cout << "DoubleLinkedCircularList luego de push_back e insert: " << list << endl;
 
     // persistencia
     stringstream ss;
     list.write(ss);
-    cout << "DCL write: " << ss.str() << endl;
+    cout << "DoubleLinkedCircularList write: " << ss.str() << endl;
 
-    DoubleCircularLinkedList<TX> copy;
+    DoubleLinkedCircularList<TX> copy;
     ss >> copy;
-    cout << "DCL read:  " << copy << endl;
+    cout << "DoubleLinkedCircularList read:  " << copy << endl;
 
     // backward
     cout << "Recorrido backward: ";
@@ -400,7 +400,7 @@ void DemoDoubleCircularLinkedList()
     cout << endl;
 
     rcall(list, AddX<TX>, TX(10));
-    cout << "DCL tras rcall(AddX, 10):       " << list << endl;
+    cout << "DoubleLinkedCircularList tras rcall(AddX, 10):       " << list << endl;
 }
 
 void DemoBinaryTree()

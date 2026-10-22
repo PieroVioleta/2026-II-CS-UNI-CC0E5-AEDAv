@@ -1,6 +1,6 @@
-#ifndef __CIRCULARLIST_H__
-#define __CIRCULARLIST_H__
-#include "linkedlist.h"
+#ifndef __CIRCULARLINKEDLIST_H__
+#define __CIRCULARLINKEDLIST_H__
+#include "LinkedList.h"
 
 template <typename T>
 class CircularForwardIterator : public GeneralIterator<CircularForwardIterator<T>, LinkedListNode<T>> {
@@ -27,21 +27,9 @@ struct CircularTraits : public LinkedListAscTraits<T> {
 };
 
 template <typename T>
-class LC : public LinkedList<CircularTraits<T>> {
-    using Base = LinkedList<CircularTraits<T>>;
+class CircularLinkedList : public LinkedList<CircularTraits<T>> {
 public:
-    void push_back(const T& value, Ref ref) {
-        Base::push_back(value, ref);
-        lock_guard<mutex> lock(this->m_mutex);
-        this->closeRing();
-    }
-
-    void insert(const T& value, Ref ref) {
-        this->openRing();
-        Base::insert(value, ref);
-        lock_guard<mutex> lock(this->m_mutex);
-        this->closeRing();
-    }
+    CircularLinkedList() { this->m_circular = true; }
 };
 
-#endif // __CIRCULARLIST_H__
+#endif // __CIRCULARLINKEDLIST_H__

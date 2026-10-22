@@ -1,6 +1,6 @@
-#ifndef __DOUBLYLIST_H__
-#define __DOUBLYLIST_H__
-#include "linkedlist.h"
+#ifndef __DOUBLELINKEDLIST_H__
+#define __DOUBLELINKEDLIST_H__
+#include "LinkedList.h"
 
 template <typename T>
 class DoubleLinkedListNode : public LinkedListNode<T> {
@@ -42,28 +42,24 @@ class DoubleLinkedList : public LinkedList<Traits> {
     using Base = LinkedList<Traits>;
 public:
     using value_type = typename Base::value_type;
+    using NodePtr = typename Base::NodePtr;
     using BackwardIterator = typename Traits::BackwardIterator;
 
-    void push_back(const value_type& value, Ref ref) {
-        auto pOldTail = this->m_pTail;
-        Base::push_back(value, ref);
-        this->m_pTail->SetPrev(pOldTail);
-    }
-
-    void insert(const value_type& value, Ref ref) {
-        Base::insert(value, ref);
-        auto current = this->m_pRoot;
-        decltype(current) pPrev = nullptr;
-        while (current != nullptr) {
-            current->SetPrev(pPrev);
-            pPrev = current;
-            current = static_cast<decltype(current)>(current->m_pNext);
-        }
-        this->m_pTail = pPrev;
+    void updateLinks() override {
+        if (!this->m_pRoot)
+            return;
+        this->m_pTail->m_pNext = this->m_circular ? this->m_pRoot : nullptr;
+        NodePtr curr = this->m_pRoot;
+        NodePtr prev = this->m_circular ? this->m_pTail : nullptr;
+        do {
+            curr->SetPrev(prev);
+            prev = curr;
+            curr = static_cast<NodePtr>(curr->m_pNext);
+        } while (curr && curr != this->m_pRoot);
     }
 
     BackwardIterator rbegin() { return BackwardIterator(this->m_pTail); }
     BackwardIterator rend()   { return BackwardIterator(nullptr); }
 };
 
-#endif // __DOUBLYLIST_H__
+#endif // __DOUBLELINKEDLIST_H__

@@ -55,111 +55,99 @@ protected:
     
     Compare m_comp; // comparador para ordenar los nodos de la lista
     mutable std::mutex m_mutex; // mutex para sincronización
+    bool m_circular = false; // activa el cierre de anillo tras cada mutacion
 
     void openRing() { if (m_pTail) m_pTail->m_pNext = nullptr; }
     void closeRing() { if (m_pTail) m_pTail->m_pNext = m_pRoot; }
 
+    virtual void updateLinks() {
+        if (m_circular && m_pTail)
+            m_pTail->m_pNext = m_pRoot;
+    }
+
     template <typename NodePtrT>
-    void internalInsert(const value_type& value, Ref ref, NodePtrT& rParent);
+    void internalInsert(const value_type& value, Ref ref, NodePtrT& rParent) {
+        if (rParent == nullptr || value < rParent->getValue()) {
+            NodePtr newNode = new Node(value, ref, rParent);
+            rParent = newNode;
+            if (newNode->m_pNext == nullptr)
+                m_pTail = newNode;
+            return;
+        }
+        internalInsert(value, ref, rParent->m_pNext);
+    }
 
 public:
     LinkedList() {}
     LinkedList(const LinkedList& another){ *this = another; } // copia profunda de la lista enlazada
-    LinkedList& operator=(const LinkedList& another); // no se permite asignacion
+    LinkedList& operator=(const LinkedList& another) {
+        clear();
+        if (!another.m_pRoot)
+            return *this;
+        std::lock_guard<std::mutex> lock(another.m_mutex);
+
+        m_pRoot = new Node(another.GetRoot()->getValue(), another.GetRoot()->getRef(), nullptr);
+
+        NodePtr next = another.m_pRoot->m_pNext;
+        NodePtr curr = m_pRoot;
+
+        while (next) {
+            curr->m_pNext = new Node(next->getValue(), next->getRef(), nullptr);
+            curr = curr->m_pNext;
+            next = next->m_pNext;
+        }
+        m_pTail = curr;
+        updateLinks();
+        return *this;
+    }
     LinkedList(initializer_list<pair<value_type, Ref>> values) {
         for (const auto &v : values)
             push_back(v.first, v.second);
     }
 
-    virtual void clear();
+    virtual void clear() {
+        lock_guard<mutex> lock(m_mutex);
+        if (m_pTail != nullptr)
+            m_pTail->m_pNext = nullptr;
+        NodePtr current = m_pRoot;
+        while (current != nullptr) {
+            NodePtr pNext = static_cast<NodePtr>(current->m_pNext); // todos los nodos son del tipo de Traits
+            delete current;
+            current = pNext;
+        }
+        m_pRoot = nullptr;
+        m_pTail = nullptr;
+    }
     virtual ~LinkedList(){ clear(); };
 
-    virtual void push_back(const value_type& value, Ref ref);
+    virtual void push_back(const value_type& value, Ref ref) {
+        scoped_lock lock(m_mutex);
+        NodePtr new_node = new Node(value, ref, nullptr);
+        if (!m_pRoot) {
+            m_pRoot = new_node;
+            m_pTail = new_node;
+        } else {
+            m_pTail->m_pNext = new_node;
+            m_pTail = new_node;
+        }
+        updateLinks();
+    }
 
     bool empty() const { return m_pRoot == nullptr; }
 
     void insert(const value_type& value, Ref ref) {
         scoped_lock lock(m_mutex);
+        openRing();
         internalInsert(value, ref, m_pRoot);
+        updateLinks();
     }
 
     std::ostream& write(std::ostream& os) { return os << *this; }
     std::istream& read(std::istream& is) { return is >> *this; }
 
-    // Iterators
-    // ForwardIterator begin() { return ForwardIterator(m_pRoot); }
-    // ForwardIterator end() { return ForwardIterator(nullptr); }
     ForwardIterator begin() const { return ForwardIterator(m_pRoot); }
     ForwardIterator end() const { return ForwardIterator(nullptr); }
 
     mutex &getMutex() { return m_mutex; }
 };
-
-
-template <typename Traits>
-LinkedList<Traits>& LinkedList<Traits>::operator=(const LinkedList<Traits>& other){
-    clear();
-    if(!other.m_pRoot)
-        return *this;
-    std::lock_guard<std::mutex> lock(other.m_mutex);
-
-    m_pRoot = new Node(other.GetRoot()->getValue(), other.GetRoot()->getRef(), nullptr);
-
-    NodePtr next = other.m_pRoot->m_pNext;
-    NodePtr curr = m_pRoot;
-
-    while(next){
-        curr->m_pNext = new Node(next->getValue(), next->getRef(), nullptr);
-        curr = curr->m_pNext;
-        next = next->m_pNext;
-    }
-    m_pTail = curr;
-    return *this;
-}
-
-template <typename Traits>
-void LinkedList<Traits>::clear(){
-    lock_guard<mutex> lock(m_mutex);
-    if (m_pTail != nullptr)
-        m_pTail->m_pNext = nullptr;
-    NodePtr current = m_pRoot;
-    while (current != nullptr) {
-        NodePtr pNext = static_cast<NodePtr>(current->m_pNext); // todos los nodos son del tipo de Traits
-        delete current;
-        current = pNext;
-    }
-    m_pRoot = nullptr;
-    m_pTail = nullptr;
-}
-
-template<typename Traits>
-void LinkedList<Traits>::push_back(const value_type& value, Ref ref){
-    scoped_lock lock(m_mutex);
-    NodePtr new_node = new Node(value, ref, nullptr);
-    if (!this->m_pRoot){
-        this->m_pRoot = new_node;
-        this->m_pTail = new_node;
-    } else {
-        this->m_pTail->m_pNext = new_node;
-        this->m_pTail = new_node;
-    }
-}
-
-/*
-internalInsert(...) recorre todos los nodos hasta llegar al final, y en la condición de parada
-si el nodo padre es nullptr, crea uno nuevo con el valor y retorna
-insert(...) empieza desde el nodo raiz
-*/
-template <typename Traits>
-template <typename NodePtrT>
-void LinkedList<Traits>::internalInsert(const value_type& value, Ref ref, NodePtrT& rParent) {
-    if (rParent == nullptr || value < rParent->getValue()) {
-        NodePtr newNode = new Node(value, ref, rParent);
-        rParent = newNode;
-        if (newNode->m_pNext == nullptr)
-            m_pTail = newNode;
-        return;
-    }
-    internalInsert(value, ref, rParent->m_pNext);
-}
 #endif // __LINKEDLIST_H__

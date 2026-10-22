@@ -1,7 +1,7 @@
-#ifndef __DOUBLECIRCULARLIST_H__
-#define __DOUBLECIRCULARLIST_H__
-#include "doublylist.h"
-#include "circularlist.h"
+#ifndef __DOUBLELINKEDCIRCULARLIST_H__
+#define __DOUBLELINKEDCIRCULARLIST_H__
+#include "DoubleLinkedList.h"
+#include "CircularLinkedList.h"
 
 template <typename T>
 using DoubleCircularForwardIterator = CircularForwardIterator<T>;
@@ -32,23 +32,9 @@ struct DoubleCircularTraits : public DoubleLinkedListTraits<T> {
 };
 
 template <typename T>
-class DoubleCircularLinkedList : public DoubleLinkedList<DoubleCircularTraits<T>> {
-    using Base = DoubleLinkedList<DoubleCircularTraits<T>>;
+class DoubleLinkedCircularList : public DoubleLinkedList<DoubleCircularTraits<T>> {
 public:
-    void push_back(const T& value, Ref ref) {
-        Base::push_back(value, ref);
-        lock_guard<mutex> lock(this->m_mutex);
-        this->closeRing();
-        this->m_pRoot->SetPrev(this->m_pTail);
-    }
-
-    void insert(const T& value, Ref ref) {
-        this->openRing();
-        Base::insert(value, ref);
-        lock_guard<mutex> lock(this->m_mutex);
-        this->closeRing();
-        this->m_pRoot->SetPrev(this->m_pTail);
-    }
+    DoubleLinkedCircularList() { this->m_circular = true; }
 };
 
-#endif // __DOUBLECIRCULARLIST_H__
+#endif // __DOUBLELINKEDCIRCULARLIST_H__
