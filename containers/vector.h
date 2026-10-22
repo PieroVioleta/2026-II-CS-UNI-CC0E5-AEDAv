@@ -116,19 +116,11 @@ public:
 
     // Persistencia
     ostream &write(ostream &os){
-        // TODO: convertirla en una linea que usa la funcion ApplyFunction generica
-        lock_guard<mutex> lock(m_mutex);
-        os << "[";
-        for (size_t i = 0; i < size()-1; ++i)
-            os << m_data[i] << ",";
-        if (size() > 0)
-            os << m_data[size()-1];
-        return os << "]";
+        return os << *this;
     }
 
-    // TODO: implementar la lectura de un vector desde un stream
     istream &read(istream &is){
-        // Implementation for reading vector from stream
+        return is >> *this;
     }
 
     mutex &getMutex() { return m_mutex; }

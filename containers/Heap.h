@@ -17,6 +17,33 @@ public:
 private:
     Vector<Traits> m_data;
     mutable std::mutex m_mutex;
+    Compare m_comp;
+
+    void HeapifyUp(size_t index) {
+        while (index > 0) {
+            size_t parentIndex = (index - 1) / 2;
+            if (m_comp(m_data[index].getValue(), m_data[parentIndex].getValue())) {
+                std::swap(m_data[index], m_data[parentIndex]);
+                index = parentIndex;
+            } else {
+                break;
+            }
+        }
+    }
+    void HeapifyDown(size_t index) {
+        size_t n = m_data.size();
+        while (true) {
+            size_t left = 2 * index + 1, right = 2 * index + 2, best = index;
+            if (left < n && m_comp(m_data[left].getValue(), m_data[best].getValue()))
+                best = left;
+            if (right < n && m_comp(m_data[right].getValue(), m_data[best].getValue()))
+                best = right;
+            if (best == index)
+                break;
+            std::swap(m_data[index], m_data[best]);
+            index = best;
+        }
+    }
 
 public:
     decltype(auto) begin() const { return m_data.begin(); }
@@ -28,31 +55,6 @@ public:
         HeapifyUp(m_data.size() - 1);
     }
 
-    void HeapifyUp(size_t index) {
-        while (index > 0) {
-            size_t parentIndex = (index - 1) / 2;
-            if (Compare()(m_data[index].getValue(), m_data[parentIndex].getValue())) {
-                std::swap(m_data[index], m_data[parentIndex]);
-                index = parentIndex;
-            } else {
-                break;
-            }
-        }
-    }
-    void HeapifyDown(size_t index) {        
-        size_t n = m_data.size();
-        while (true) {
-            size_t left = 2 * index + 1, right = 2 * index + 2, best = index;
-            if (left < n && Compare()(m_data[left].getValue(), m_data[best].getValue()))
-                best = left;
-            if (right < n && Compare()(m_data[right].getValue(), m_data[best].getValue()))
-                best = right;
-            if (best == index)
-                break;
-            std::swap(m_data[index], m_data[best]);
-            index = best;
-        }
-    }
     Node pop() {
         lock_guard<mutex> lock(m_mutex);
         if (m_data.empty()) return Node();
@@ -67,26 +69,8 @@ public:
     size_t size() const { return m_data.size(); }
     Node &operator[](size_t index) { return m_data[index]; }
 
-    template <typename Func, typename... Args>
-    void ApplyFunction(Func func, Args... args) {
-        call(func, std::forward<Args>(args)...);
-    }
-
-    template <typename Func, typename... Args>
-    Node &FirstThat(Func func, Args... args) {
-        return call(func, std::forward<Args>(args)...);
-    }
-
-    template <typename Func, typename... Args>
-    decltype(auto) call(Func func, Args&&... args) {
-        lock_guard<mutex> lock(m_mutex);
-        if constexpr (is_void_v<invoke_result_t<Func, Node &, Args...>>)
-            ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-        else // return type is not void:
-            return ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
-    }
-
     void clear() {
+        lock_guard<mutex> lock(m_mutex);
         m_data.clear();
     }
 

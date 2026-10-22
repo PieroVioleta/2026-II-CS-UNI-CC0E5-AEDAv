@@ -43,6 +43,54 @@ void PrintNode(Node &node, ostream &os) {
 }
 const int NThreads = 5;
 
+// Datos de ejemplo compartidos entre demos
+static const vector<pair<TX, Ref>> Values0To4 = {{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}};
+static const vector<pair<TX, Ref>> ValuesHeap = {{5, 50}, {1, 10}, {8, 80}, {3, 30}, {9, 90}, {2, 20}, {7, 70}, {4, 40}, {6, 60}};
+
+// Recorre el Container hacia atras (rbegin/rend) imprimiendo los nodos.
+template <typename Container>
+void TestBackward(Container &container) {
+    cout << "Recorrido backward: ";
+    for (auto it = container.rbegin(); it != container.rend(); ++it)
+        cout << *it << " ";
+    cout << endl;
+}
+
+// Serializa el Container en un stringstream y lo relee en una copia
+// (operator<< / operator>>); imprime ambas versiones.
+template <typename Container>
+void TestPersist(Container &container, const string &name) {
+    stringstream ss;
+    ss << container;
+    cout << name << " write: " << ss.str() << endl;
+    Container copy;
+    ss >> copy;
+    cout << name << " read:  " << copy << endl;
+}
+
+// Aplica AddOne a todos los nodos e imprime el estado resultante.
+template <typename Container>
+void TestApplyAddOne(Container &container, const string &name) {
+    container.ApplyFunction(AddOne);
+    cout << name << " tras ApplyFunction(AddOne): " << container << endl;
+}
+
+// nThreads workers insertan concurrentemente n parejas por hilo: el hilo t
+// mete el valor (t*n + i) y pusher decide el metodo de insercion (push_back
+// o insert) y el ref asociado. Espera (join) a todos al terminar.
+template <typename Container, typename Pusher>
+void ConcurrentInsert(Container &container, int nThreads, int n, Pusher pusher) {
+    vector<thread> workers;
+    for (int t = 0; t < nThreads; ++t) {
+        workers.emplace_back([&container, pusher, t, n]() {
+            for (int i = 0; i < n; ++i)
+                pusher(container, t * n + i);
+        });
+    }
+    for (auto &worker : workers)
+        worker.join();
+}
+
 // Inserta secuencialmente cada pareja (valor, ref) de 'values' en el
 // Container, una por una. La insercion concurrente queda aislada en
 // DemoRaceCondition(), que es donde se estudia esa problematica.
@@ -195,9 +243,7 @@ void DemoLinkedList()
     TestContainer(list, {{5, 15}, {1, 11}, {8, 18}, {3, 13}}, "linkedlist.txt");
     TestForwardTraversal(list);
 
-    auto elements = std::vector<pair<TX, Ref>>({{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}});
-    for(auto& e : elements)
-        list.push_back(e.first, e.second);
+    InsertElements(list, Values0To4);
 
     // Pruebas de insert
     list.insert(4, 12);
@@ -231,9 +277,8 @@ void DemoHeap()
     // uso
     MinHeap<TX> minHeap;
     MaxHeap<TX> maxHeap;
-    vector<pair<TX, Ref>> values = {{5, 50}, {1, 10}, {8, 80}, {3, 30}, {9, 90}, {2, 20}, {7, 70}, {4, 40}, {6, 60}};
-    InsertElements(minHeap, values);
-    InsertElements(maxHeap, values);
+    InsertElements(minHeap, ValuesHeap);
+    InsertElements(maxHeap, ValuesHeap);
     cout << "MinHeap (raiz = menor): " << minHeap << endl;
     cout << "MaxHeap (raiz = mayor): " << maxHeap << endl;
 
@@ -241,31 +286,16 @@ void DemoHeap()
     minHeap.call(PrintNode<MinHeap<TX>::Node>, cout);
     cout << endl;
 
-    minHeap.ApplyFunction(AddOne);
-    maxHeap.ApplyFunction(AddOne);
-    cout << "MinHeap tras ApplyFunction(AddOne): " << minHeap << endl;
-    cout << "MaxHeap tras ApplyFunction(AddOne): " << maxHeap << endl;
+    TestApplyAddOne(minHeap, "MinHeap");
+    TestApplyAddOne(maxHeap, "MaxHeap");
 
     // persistencia
-    stringstream ss;
-    ss << minHeap;
-    cout << "MinHeap write: " << ss.str() << endl;
-    MinHeap<TX> copia;
-    ss >> copia;
-    cout << "MinHeap read:  " << copia << endl;
+    TestPersist(minHeap, "MinHeap");
 
     // concurrencia
     MinHeap<TX> concurrente;
     const int NThreads = 4, N = 250;
-    vector<thread> workers;
-    for (int t = 0; t < NThreads; ++t) {
-        workers.emplace_back([&concurrente, t, N]() {
-            for (int i = 0; i < N; ++i)
-                concurrente.push_back(t * N + i, (t * N + i) * 10);
-        });
-    }
-    for (auto &worker : workers)
-        worker.join();
+    ConcurrentInsert(concurrente, NThreads, N, [](auto &c, TX v) { c.push_back(v, v * 10); });
 
     bool ok = true;
     for (size_t i = 1; i < concurrente.size() && ok; ++i)
@@ -305,17 +335,10 @@ void DemoCircularLinkedList()
     cout << endl;
 
     // persistencia
-    stringstream ss;
-    list.write(ss);
-    cout << "CircularLinkedList write: " << ss.str() << endl;
-
-    CircularLinkedList<TX> copy;
-    ss >> copy;
-    cout << "CircularLinkedList read:  " << copy << endl;
+    TestPersist(list, "CircularLinkedList");
 
     // call
-    list.ApplyFunction(AddOne);
-    cout << "CircularLinkedList tras ApplyFunction(AddOne): " << list << endl;
+    TestApplyAddOne(list, "CircularLinkedList");
 
     list.call(AddX<TX>, TX(10));
     cout << "CircularLinkedList tras call(AddX, 10):        " << list << endl;
@@ -331,15 +354,7 @@ void DemoCircularLinkedList()
     // concurrencia
     list.clear();
     const int NThreads = 4;
-    vector<thread> workers;
-    for (int t = 0; t < NThreads; ++t) {
-        workers.emplace_back([&list, t]() {
-            for (int i = 0; i < 100; ++i)
-                list.push_back(t * 100 + i, t * 1000 + i);
-        });
-    }
-    for (auto &worker : workers)
-        worker.join();
+    ConcurrentInsert(list, NThreads, 100, [](auto &c, TX v) { c.push_back(v, v * 10); });
 
     int count = 0;
     p = list.GetRoot();
@@ -365,10 +380,7 @@ void DemoDoubleLinkedList()
     cout << "DoubleLinkedList luego de insert(0,5):  " << list << endl;
 
     // backward
-    cout << "Recorrido backward: ";
-    for (auto it = list.rbegin(); it != list.rend(); ++it)
-        cout << *it << " ";
-    cout << endl;
+    TestBackward(list);
 
     rcall(list, AddX<TX>, TX(10));
     cout << "DoubleLinkedList tras rcall(AddX, 10):  " << list << endl;
@@ -385,19 +397,10 @@ void DemoDoubleCircularLinkedList()
     cout << "DoubleLinkedCircularList luego de push_back e insert: " << list << endl;
 
     // persistencia
-    stringstream ss;
-    list.write(ss);
-    cout << "DoubleLinkedCircularList write: " << ss.str() << endl;
-
-    DoubleLinkedCircularList<TX> copy;
-    ss >> copy;
-    cout << "DoubleLinkedCircularList read:  " << copy << endl;
+    TestPersist(list, "DoubleLinkedCircularList");
 
     // backward
-    cout << "Recorrido backward: ";
-    for (auto it = list.rbegin(); it != list.rend(); ++it)
-        cout << *it << " ";
-    cout << endl;
+    TestBackward(list);
 
     rcall(list, AddX<TX>, TX(10));
     cout << "DoubleLinkedCircularList tras rcall(AddX, 10):       " << list << endl;
@@ -423,23 +426,13 @@ void DemoBinaryTree()
     cout << endl;
 
     // backward
-    cout << "Recorrido backward: ";
-    for (auto it = tree.rbegin(); it != tree.rend(); ++it)
-        cout << *it << " ";
-    cout << endl;
+    TestBackward(tree);
 
     // persistencia
-    stringstream ss;
-    ss << tree;
-    cout << "BinaryTree write: " << ss.str() << endl;
-
-    BinaryTree<BinaryTreeTraits<TX>> copia;
-    ss >> copia;
-    cout << "BinaryTree read:  " << copia << endl;
+    TestPersist(tree, "BinaryTree");
 
     // call
-    tree.ApplyFunction(AddOne);
-    cout << "BinaryTree tras ApplyFunction(AddOne): " << tree << endl;
+    TestApplyAddOne(tree, "BinaryTree");
 
     tree.call(AddX<TX>, TX(10));
     cout << "BinaryTree tras call(AddX, 10):        " << tree << endl;
@@ -452,15 +445,7 @@ void DemoBinaryTree()
     // concurrencia
     tree.clear();
     const int NThreads = 4;
-    vector<thread> workers;
-    for (int t = 0; t < NThreads; ++t) {
-        workers.emplace_back([&tree, t]() {
-            for (int i = 0; i < 100; ++i)
-                tree.insert(t * 100 + i, t * 1000 + i);
-        });
-    }
-    for (auto &worker : workers)
-        worker.join();
+    ConcurrentInsert(tree, NThreads, 100, [](auto &c, TX v) { c.insert(v, v * 10); });
 
     size_t count = 0;
     auto it = tree.begin();

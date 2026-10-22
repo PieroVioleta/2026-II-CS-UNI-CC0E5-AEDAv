@@ -62,10 +62,24 @@ private:
         internal_clone(node->m_pChild[0], other->m_pChild[0], node);
         internal_clone(node->m_pChild[1], other->m_pChild[1], node);
     }
+    NodePtr leftmost() const {
+        NodePtr p = m_root;
+        if (p)
+            while (p->m_pChild[0])
+                p = p->m_pChild[0];
+        return p;
+    }
+    NodePtr rightmost() const {
+        NodePtr p = m_root;
+        if (p)
+            while (p->m_pChild[1])
+                p = p->m_pChild[1];
+        return p;
+    }
 public:
     BinaryTree() {}
     BinaryTree(const BinaryTree& another){ *this = another; } // copia profunda del arbol
-    BinaryTree(BinaryTree&& another) : m_root(std::exchange(another.m_root, nullptr)) {}
+    BinaryTree(BinaryTree&& another) noexcept : m_root(std::exchange(another.m_root, nullptr)) {}
     BinaryTree& operator=(const BinaryTree& another) {
         if (this != &another) {
             clear();
@@ -74,7 +88,7 @@ public:
         }
         return *this;
     }
-    BinaryTree& operator=(BinaryTree&& another) {
+    BinaryTree& operator=(BinaryTree&& another) noexcept {
         if (this != &another) {
             clear();
             m_root = std::exchange(another.m_root, nullptr);
@@ -96,22 +110,10 @@ public:
 
     bool empty() const { return m_root == nullptr; }
 
-    ForwardIterator begin() const {
-        NodePtr p = m_root;
-        if (p)
-            while (p->m_pChild[0])
-                p = p->m_pChild[0];
-        return ForwardIterator(p);
-    }
+    ForwardIterator begin() const { return ForwardIterator(leftmost()); }
     ForwardIterator end() const { return ForwardIterator(nullptr); }
 
-    BackwardIterator rbegin() const {
-        NodePtr p = m_root;
-        if (p)
-            while (p->m_pChild[1])
-                p = p->m_pChild[1];
-        return BackwardIterator(p);
-    }
+    BackwardIterator rbegin() const { return BackwardIterator(rightmost()); }
     BackwardIterator rend() const { return BackwardIterator(nullptr); }
 
     mutex &getMutex() { return m_mutex; }
