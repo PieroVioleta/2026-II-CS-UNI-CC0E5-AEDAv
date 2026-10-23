@@ -12,7 +12,7 @@
 #include "containers/CircularLinkedList.h"
 #include "containers/DoubleLinkedList.h"
 #include "containers/DoubleLinkedCircularList.h"
-#include "containers/binarytree.h"
+#include "containers/BinaryTree.h"
 #include "Demos.h"
 using namespace std;
 
