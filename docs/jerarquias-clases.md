@@ -92,7 +92,7 @@ classDiagram
 > de `CircularForwardIterator<T>`: el recorrido forward de la lista doble y de
 > la doble-circular es idéntico al de sus versiones simples, por lo que se
 > reutiliza la implementación en lugar de duplicar clases. Los iteradores del
-> árbol viven en `GeneralTraits.h` y sirven para cualquier árbol cuyos nodos
+> árbol viven en `GeneralIterator.h` y sirven para cualquier árbol cuyos nodos
 > hereden de `BinaryTreeNode`.
 
 ## 3 · Contenedores
