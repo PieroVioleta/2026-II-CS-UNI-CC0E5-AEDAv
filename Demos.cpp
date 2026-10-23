@@ -16,6 +16,16 @@
 #include "Demos.h"
 using namespace std;
 
+const int kRed = 31, kGreen = 32, kYellow = 33, kBlue = 34, kMagenta = 35, kCyan = 36;
+
+void PrintTitle(const string &name, int color) {
+    cout << "\033[1;" << color << "m=== " << name << " ===\033[0m" << endl;
+}
+
+void PrintSubtitle(const string &name, int color) {
+    cout << "\033[0;" << color << "m--- " << name << " ---\033[0m" << endl;
+}
+
 void AddOne(GeneralNode<TX> &node) {
     node.value() += 1;
 }
@@ -43,11 +53,9 @@ void PrintNode(Node &node, ostream &os) {
 }
 const int NThreads = 5;
 
-// Datos de ejemplo compartidos entre demos
 static const vector<pair<TX, Ref>> Values0To4 = {{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}};
 static const vector<pair<TX, Ref>> ValuesHeap = {{5, 50}, {1, 10}, {8, 80}, {3, 30}, {9, 90}, {2, 20}, {7, 70}, {4, 40}, {6, 60}};
 
-// Recorre el Container hacia atras (rbegin/rend) imprimiendo los nodos.
 template <typename Container>
 void TestBackward(Container &container) {
     cout << "Recorrido backward: ";
@@ -56,8 +64,6 @@ void TestBackward(Container &container) {
     cout << endl;
 }
 
-// Serializa el Container en un stringstream y lo relee en una copia
-// (operator<< / operator>>); imprime ambas versiones.
 template <typename Container>
 void TestPersist(Container &container, const string &name) {
     stringstream ss;
@@ -68,16 +74,12 @@ void TestPersist(Container &container, const string &name) {
     cout << name << " read:  " << copy << endl;
 }
 
-// Aplica AddOne a todos los nodos e imprime el estado resultante.
 template <typename Container>
 void TestApplyAddOne(Container &container, const string &name) {
     container.ApplyFunction(AddOne);
     cout << name << " tras ApplyFunction(AddOne): " << container << endl;
 }
 
-// nThreads workers insertan concurrentemente n parejas por hilo: el hilo t
-// mete el valor (t*n + i) y pusher decide el metodo de insercion (push_back
-// o insert) y el ref asociado. Espera (join) a todos al terminar.
 template <typename Container, typename Pusher>
 void ConcurrentInsert(Container &container, int nThreads, int n, Pusher pusher) {
     vector<thread> workers;
@@ -170,6 +172,7 @@ void TestForwardTraversal(Container &container){
 }
 
 void DemoVector() {
+    PrintTitle("DemoVector", kCyan);
     // Dejamos los archivos vacios para que TestContainer acumule (append)
     // el estado del container tras cada paso
     ofstream("vector.txt", ios::trunc).close();
@@ -192,6 +195,7 @@ void DemoVector() {
 // (sin el mutex/lock_guard actual) esto perderia inserciones o crashearia;
 // con el mutex protegiendo push_back/resize, deberia dar siempre 0 perdidas.
 void DemoRaceCondition() {
+    PrintTitle("DemoRaceCondition", kYellow);
     const size_t N = 200000;
 
     vector<pair<TX, Ref>> values(N);
@@ -234,36 +238,37 @@ void DemoRaceCondition() {
 // TODO: Implementar DemoLinkedList() para probar la lista enlazada y sus iteradores.
 void DemoLinkedList()
 {
+    PrintTitle("DemoLinkedList", kGreen);
     using IntLinkedList = LinkedList<LinkedListAscTraits<TX>>;
 
     ofstream("linkedlist.txt", ios::trunc).close();
 
-    // Pruebas de pushback
+    PrintSubtitle("push_back", kGreen);
     IntLinkedList list;
     TestContainer(list, {{5, 15}, {1, 11}, {8, 18}, {3, 13}}, "linkedlist.txt");
     TestForwardTraversal(list);
 
     InsertElements(list, Values0To4);
 
-    // Pruebas de insert
+    PrintSubtitle("insert", kGreen);
     list.insert(4, 12);
     list.insert(11, 20);
     list.insert(7, 6);
     cout << "LinkedList luego de hacer 3 inserts " << list << endl;
 
-    // Prueba de apply function
+    PrintSubtitle("apply function", kGreen);
     list.ApplyFunction(AddOne);
     cout << "LinkedList tras usar Add One a sus elementos: " << list << endl;
     list.ApplyFunction(AddX<TX>, TX(10));
     cout << "LinkedList tras usar AddX(10) a sus elementos: " << list << endl;
 
-    // Prueba de clear
+    PrintSubtitle("clear", kGreen);
     list.clear();
     cout << "LinkedList luego de usar clear" << list << endl;
     list.push_back(10, 2);
     cout << "LinkedList luego de un nuevo push_back " << list << endl;
 
-    // Prueba de lectura
+    PrintSubtitle("lectura", kGreen);
     IntLinkedList new_list;
     ifstream in("linkedlist.txt");
     in >> new_list;
@@ -274,7 +279,8 @@ void DemoLinkedList()
 
 void DemoHeap()
 {
-    // uso
+    PrintTitle("DemoHeap", kMagenta);
+    PrintSubtitle("uso", kMagenta);
     MinHeap<TX> minHeap;
     MaxHeap<TX> maxHeap;
     InsertElements(minHeap, ValuesHeap);
@@ -289,10 +295,10 @@ void DemoHeap()
     TestApplyAddOne(minHeap, "MinHeap");
     TestApplyAddOne(maxHeap, "MaxHeap");
 
-    // persistencia
+    PrintSubtitle("persistencia", kMagenta);
     TestPersist(minHeap, "MinHeap");
 
-    // concurrencia
+    PrintSubtitle("concurrencia", kMagenta);
     MinHeap<TX> concurrente;
     const int NThreads = 4, N = 250;
     ConcurrentInsert(concurrente, NThreads, N, [](auto &c, TX v) { c.push_back(v, v * 10); });
@@ -315,7 +321,8 @@ void DemoHeap()
 
 void DemoCircularLinkedList()
 {
-    // uso
+    PrintTitle("DemoCircularLinkedList", kBlue);
+    PrintSubtitle("uso", kBlue);
     CircularLinkedList<TX> list;
     list.push_back(3, 30);
     list.push_back(1, 10);
@@ -325,7 +332,7 @@ void DemoCircularLinkedList()
     list.insert(2, 25);
     cout << "CircularLinkedList luego de insert(2,25): " << list << endl;
 
-    // bucle nativo
+    PrintSubtitle("bucle nativo", kBlue);
     cout << "Bucle nativo sobre el anillo: ";
     LinkedListNode<TX> *p = list.GetRoot();
     do {
@@ -334,10 +341,10 @@ void DemoCircularLinkedList()
     } while (p != list.GetRoot());
     cout << endl;
 
-    // persistencia
+    PrintSubtitle("persistencia", kBlue);
     TestPersist(list, "CircularLinkedList");
 
-    // call
+    PrintSubtitle("call", kBlue);
     TestApplyAddOne(list, "CircularLinkedList");
 
     list.call(AddX<TX>, TX(10));
@@ -351,7 +358,7 @@ void DemoCircularLinkedList()
         cout << "CircularLinkedList FirstThat sin match: " << e.what() << endl;
     }
 
-    // concurrencia
+    PrintSubtitle("concurrencia", kBlue);
     list.clear();
     const int NThreads = 4;
     ConcurrentInsert(list, NThreads, 100, [](auto &c, TX v) { c.push_back(v, v * 10); });
@@ -369,7 +376,8 @@ void DemoCircularLinkedList()
 
 void DemoDoubleLinkedList()
 {
-    // uso
+    PrintTitle("DemoDoubleLinkedList", kRed);
+    PrintSubtitle("uso", kRed);
     DoubleLinkedList<DoubleLinkedListTraits<TX>> list;
     list.push_back(3, 30);
     list.push_back(1, 10);
@@ -379,7 +387,7 @@ void DemoDoubleLinkedList()
     list.insert(0, 5);
     cout << "DoubleLinkedList luego de insert(0,5):  " << list << endl;
 
-    // backward
+    PrintSubtitle("backward", kRed);
     TestBackward(list);
 
     rcall(list, AddX<TX>, TX(10));
@@ -388,7 +396,8 @@ void DemoDoubleLinkedList()
 
 void DemoDoubleCircularLinkedList()
 {
-    // uso
+    PrintTitle("DemoDoubleCircularLinkedList", kCyan);
+    PrintSubtitle("uso", kCyan);
     DoubleLinkedCircularList<TX> list;
     list.push_back(3, 30);
     list.push_back(1, 10);
@@ -396,10 +405,10 @@ void DemoDoubleCircularLinkedList()
     list.insert(0, 5);
     cout << "DoubleLinkedCircularList luego de push_back e insert: " << list << endl;
 
-    // persistencia
+    PrintSubtitle("persistencia", kCyan);
     TestPersist(list, "DoubleLinkedCircularList");
 
-    // backward
+    PrintSubtitle("backward", kCyan);
     TestBackward(list);
 
     rcall(list, AddX<TX>, TX(10));
@@ -408,7 +417,8 @@ void DemoDoubleCircularLinkedList()
 
 void DemoBinaryTree()
 {
-    // uso
+    PrintTitle("DemoBinaryTree", kGreen);
+    PrintSubtitle("uso", kGreen);
     BinaryTree<BinaryTreeTraits<TX>> tree;
     tree.insert(5, 50);
     tree.insert(1, 10);
@@ -419,19 +429,19 @@ void DemoBinaryTree()
     tree.insert(7, 70);
     cout << "BinaryTree (in-order, ordenado): " << tree << endl;
 
-    // bucle con iteradores
+    PrintSubtitle("bucle con iteradores", kGreen);
     cout << "Recorrido in-order: ";
     for (auto it = tree.begin(); it != tree.end(); ++it)
         cout << *it << " ";
     cout << endl;
 
-    // backward
+    PrintSubtitle("backward", kGreen);
     TestBackward(tree);
 
-    // persistencia
+    PrintSubtitle("persistencia", kGreen);
     TestPersist(tree, "BinaryTree");
 
-    // call
+    PrintSubtitle("call", kGreen);
     TestApplyAddOne(tree, "BinaryTree");
 
     tree.call(AddX<TX>, TX(10));
@@ -442,7 +452,7 @@ void DemoBinaryTree()
 
     cout << "BinaryTree FirstThat(>50): " << tree.FirstThat([](GeneralNode<TX> &n){ return n.getValue() > 50; }) << endl;
 
-    // concurrencia
+    PrintSubtitle("concurrencia", kGreen);
     tree.clear();
     const int NThreads = 4;
     ConcurrentInsert(tree, NThreads, 100, [](auto &c, TX v) { c.insert(v, v * 10); });
