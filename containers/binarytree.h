@@ -4,6 +4,8 @@
 #include "GeneralIterator.h"
 #include "GeneralContainer.h"
 #include "mixins.h"
+#include "../utilities/printcolored.h"
+#include <string>
 
 template <typename T>
 class BinaryTreeNode : public GeneralNode<T> {
@@ -98,6 +100,17 @@ protected:
 private:
     NodePtr m_root = nullptr; // root of the binary tree
     void internal_insert(NodePtr& node, const value_type& value, Ref ref, NodePtr parent = nullptr);
+
+    void PrintTree(std::ostream &os, NodePtr node, int depth, const char *connector) const {
+        if (!node)
+            return;
+        static const Color kLevelColors[] = {Color::Red, Color::Green, Color::Yellow, Color::Blue, Color::Magenta, Color::Cyan};
+        PrintTree(os, node->m_pChild[1], depth + 1, "┌─ ");
+        os << std::string(depth * 4, ' ') << connector;
+        PrintColored(os, *node, kLevelColors[depth % 6], false);
+        os << "\n";
+        PrintTree(os, node->m_pChild[0], depth + 1, "└─ ");
+    }
 public:
     BaseBinaryTree() = default;
     BaseBinaryTree(const BaseBinaryTree& another) { *this = another; }
@@ -126,6 +139,12 @@ public:
 
     BackwardIterator rbegin() const;
     BackwardIterator rend() const { return BackwardIterator(nullptr); }
+
+    NodePtr GetRoot() const { return m_root; }
+
+    virtual void PrintTree(std::ostream &os = std::cout) const {
+        PrintTree(os, m_root, 0, "");
+    }
 
     BaseBinaryTree& operator=(const BaseBinaryTree& another);
     BaseBinaryTree& operator=(BaseBinaryTree&& another) noexcept;

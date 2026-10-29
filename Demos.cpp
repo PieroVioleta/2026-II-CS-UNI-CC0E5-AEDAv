@@ -330,6 +330,9 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     // Recorrido in-order
     TestTraversal(tree);
 
+    cout << "Arbol girado 90 grados (arriba = hijo derecho):\n";
+    tree.PrintTree();
+
     tree.ApplyFunction(AddOne);
     cout << "Arbol tras usar AddOne: " << tree << endl;
     tree.ApplyFunction(AddX<TX>, TX(10));
