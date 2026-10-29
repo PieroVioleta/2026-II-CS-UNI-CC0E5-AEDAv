@@ -22,11 +22,15 @@ public:
 
 };
 
-template <typename T, TX Dir>
-class BinaryTreeIterator : public GeneralIterator<BinaryTreeIterator<T, Dir>, BinaryTreeNode<T>> {
+// Un solo iterador para los 6 recorridos: (inorden, preorden, postorden) x (asc, desc).
+// Order selecciona el orden de visita y Dir espeja izquierda/derecha.
+enum TraversalOrder : TX { InOrder = 0, PreOrder = 1, PostOrder = 2 };
+
+template <typename T, TX Order = InOrder, TX Dir = 0>
+class BinaryTreeIterator : public GeneralIterator<BinaryTreeIterator<T, Order, Dir>, BinaryTreeNode<T>> {
 public:
     using Node = BinaryTreeNode<T>;
-    using MySelf = BinaryTreeIterator<T, Dir>;
+    using MySelf = BinaryTreeIterator<T, Order, Dir>;
     using Parent = GeneralIterator<MySelf, Node>;
     using NodePtr = Node*;
     using Parent::Parent;
@@ -35,33 +39,62 @@ public:
     MySelf& operator++();
 };
 
-template <typename T, TX Dir>
-auto BinaryTreeIterator<T, Dir>::operator++() -> MySelf& {
+template <typename T, TX Order, TX Dir>
+auto BinaryTreeIterator<T, Order, Dir>::operator++() -> MySelf& {
     auto node = Parent::m_ptr;
     if (node == nullptr)
         return *this;
-    if (node->m_pChild[1-Dir]) {
-        node = node->m_pChild[1-Dir];
-        while (node->m_pChild[Dir])
-            node = node->m_pChild[Dir];
-        Parent::m_ptr = node;
-    } else {
-        auto parent = node->m_parent;
-        while (parent && node == parent->m_pChild[1-Dir]) {
-            node = parent;
-            parent = parent->m_parent;
-        }
-        Parent::m_ptr = parent;
+    NodePtr parent = nullptr;
+    switch (Order) {
+        case InOrder:
+            if (node->m_pChild[1-Dir]) {
+                node = node->m_pChild[1-Dir];
+                while (node->m_pChild[Dir])
+                    node = node->m_pChild[Dir];
+                Parent::m_ptr = node;
+            } else {
+                parent = node->m_parent;
+                while (parent && node == parent->m_pChild[1-Dir]) {
+                    node = parent;
+                    parent = parent->m_parent;
+                }
+                Parent::m_ptr = parent;
+            }
+            break;
+        case PreOrder:
+            if (node->m_pChild[Dir])
+                Parent::m_ptr = node->m_pChild[Dir];
+            else if (node->m_pChild[1-Dir])
+                Parent::m_ptr = node->m_pChild[1-Dir];
+            else {
+                for (parent = node->m_parent; parent; node = parent, parent = parent->m_parent)
+                    if (node == parent->m_pChild[Dir] && parent->m_pChild[1-Dir])
+                        break;
+                Parent::m_ptr = parent ? parent->m_pChild[1-Dir] : nullptr;
+            }
+            break;
+        default:
+            parent = node->m_parent;
+            if (!parent)
+                Parent::m_ptr = nullptr; // la raiz cierra el recorrido
+            else if (node == parent->m_pChild[1-Dir] || !parent->m_pChild[1-Dir])
+                Parent::m_ptr = parent;
+            else {
+                node = parent->m_pChild[1-Dir];
+                while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
+                    node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
+                Parent::m_ptr = node;
+            }
+            break;
     }
-
     return *this;
 }
 
 template <typename T>
-using BinaryTreeForwardIterator = BinaryTreeIterator<T, 0>;
+using BinaryTreeForwardIterator = BinaryTreeIterator<T, InOrder, 0>;
 
 template <typename T>
-using BinaryTreeBackwardIterator = BinaryTreeIterator<T, 1>;
+using BinaryTreeBackwardIterator = BinaryTreeIterator<T, InOrder, 1>;
 
 template <typename T>
 struct BinaryTreeTraits {
@@ -189,6 +222,35 @@ public:
 
     BackwardIterator rbegin() const;
     BackwardIterator rend() const { return BackwardIterator(nullptr); }
+
+    // Primer nodo del recorrido (Order, Dir): la raiz en preorden; en
+    // inorden se baja por el hijo Dir; en postorden se prefiere Dir.
+    template <TX Order, TX Dir>
+    NodePtr first_node(NodePtr node) const {
+        if (!node)
+            return node;
+        if (Order == PreOrder)
+            return node;
+        if (Order == InOrder) {
+            while (node->m_pChild[Dir])
+                node = node->m_pChild[Dir];
+            return node;
+        }
+        while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
+            node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
+        return node;
+    }
+
+    // begin/end para cualquiera de los 6 recorridos, p.ej. begin<PreOrder, 1>()
+    template <TX Order, TX Dir = 0>
+    BinaryTreeIterator<value_type, Order, Dir> begin() const {
+        return BinaryTreeIterator<value_type, Order, Dir>(first_node<Order, Dir>(m_root));
+    }
+
+    template <TX Order, TX Dir = 0>
+    BinaryTreeIterator<value_type, Order, Dir> end() const {
+        return BinaryTreeIterator<value_type, Order, Dir>(nullptr);
+    }
 
     NodePtr GetRoot() const { return m_root; }
 
