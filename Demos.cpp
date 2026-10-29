@@ -326,12 +326,28 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     ofstream(filename, ios::trunc).close();
 
     // Pruebas de insercion y persistencia
-    TestContainer(tree, {{50, 5}, {20, 2}, {80, 8}, {10, 1}, {30, 3}, {70, 7}, {90, 9}}, filename);
+    TestContainer(tree, {{50, 5}, {20, 2}, {80, 8}, {10, 1}, {30, 3}, {70, 7}, {90, 9}, {5, 0}, {15, 1}, {25, 2}, {35, 3}, {65, 6}, {75, 7}, {85, 8}, {95, 9}}, filename);
     // Recorrido in-order
     TestTraversal(tree);
 
     cout << "Arbol girado 90 grados (arriba = hijo derecho):\n";
     tree.PrintTree();
+
+    // Pruebas de remove
+    auto removed = tree.remove(20);
+    cout << "remove(20) saco " << removed << ", arbol queda:\n";
+    tree.PrintTree();
+    removed = tree.remove(50);
+    cout << "remove(50) saco " << removed << ", arbol queda:\n";
+    tree.PrintTree();
+    removed = tree.remove(5);
+    cout << "remove(5) saco " << removed << ", arbol queda:\n";
+    tree.PrintTree();
+    removed = tree.remove(80);
+    cout << "remove(80) saco " << removed << ", arbol queda:\n";
+    tree.PrintTree();
+    removed = tree.remove(99);
+    cout << "remove(99) saco " << removed << ", arbol queda: " << tree << endl;
 
     tree.ApplyFunction(AddOne);
     cout << "Arbol tras usar AddOne: " << tree << endl;

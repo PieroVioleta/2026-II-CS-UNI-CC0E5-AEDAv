@@ -111,6 +111,45 @@ private:
         os << "\n";
         PrintTree(os, node->m_pChild[0], depth + 1, "└─ ");
     }
+
+    NodePtr detach_min(NodePtr sub, NodePtr subParent) {
+        while (sub->m_pChild[0]) {
+            subParent = sub;
+            sub = sub->m_pChild[0];
+        }
+        if (subParent->m_pChild[0] == sub)
+            subParent->m_pChild[0] = sub->m_pChild[1];
+        else
+            subParent->m_pChild[1] = sub->m_pChild[1];
+        if (sub->m_pChild[1])
+            sub->m_pChild[1]->m_parent = subParent;
+        return sub;
+    }
+    void internal_remove(NodePtr& node, NodePtr parent, const value_type& value, NodePtr* out) {
+        if (!node)
+            return;
+        if (Compare()(value, node->getValue()))
+            return internal_remove(node->m_pChild[0], node, value, out);
+        if (Compare()(node->getValue(), value))
+            return internal_remove(node->m_pChild[1], node, value, out);
+        *out = node;
+        if (!node->m_pChild[0] || !node->m_pChild[1]) {
+            node = node->m_pChild[node->m_pChild[0] ? 0 : 1];
+        } else {
+            NodePtr succ = detach_min(node->m_pChild[1], node);
+            succ->m_pChild[0] = node->m_pChild[0];
+            succ->m_pChild[1] = node->m_pChild[1];
+            if (succ->m_pChild[0])
+                succ->m_pChild[0]->m_parent = succ;
+            if (succ->m_pChild[1])
+                succ->m_pChild[1]->m_parent = succ;
+            succ->m_parent = parent;
+            node = succ;
+            return;
+        }
+        if (node)
+            node->m_parent = parent;
+    }
 public:
     BaseBinaryTree() = default;
     BaseBinaryTree(const BaseBinaryTree& another) { *this = another; }
@@ -131,6 +170,17 @@ public:
     void clear() override;
 
     void push_back(const value_type& value, Ref ref) override { insert(value, ref); }
+
+    Node remove(const value_type& value) {
+        std::lock_guard lock(this->m_mutex);
+        NodePtr removed = nullptr;
+        internal_remove(m_root, nullptr, value, &removed);
+        if (!removed)
+            return Node();
+        Node result(removed->getValue(), removed->getRef());
+        delete removed;
+        return result;
+    }
 
     void clear_recursive(NodePtr node);
 
