@@ -5,14 +5,17 @@
 #include "GeneralContainer.h"
 #include "mixins.h"
 #include "../utilities/printcolored.h"
+#include <map>
+#include <sstream>
 #include <string>
+#include <vector>
 
-template <typename T>
-class BinaryTreeNode : public GeneralNode<T> {
+template <typename T, typename Derived>
+class BaseBinaryNode : public GeneralNode<T> {
 public:
     using value_type        = T;
-    using MySelf            = BinaryTreeNode<T>;
-    using Node              = MySelf;
+    using MySelf            = Derived;
+    using Node              = Derived;
     using NodePtr           = Node*;
     using Parent            = GeneralNode<T>;
     using Parent::Parent; // Inherit constructor
@@ -22,15 +25,20 @@ public:
 
 };
 
-// Un solo iterador para los 6 recorridos: (inorden, preorden, postorden) x (asc, desc).
-// Order selecciona el orden de visita y Dir espeja izquierda/derecha.
+template <typename T>
+class BinaryTreeNode : public BaseBinaryNode<T, BinaryTreeNode<T>> {
+public:
+    using Parent = BaseBinaryNode<T, BinaryTreeNode<T>>;
+    using Parent::Parent;
+};
+
 enum TraversalOrder : TX { InOrder = 0, PreOrder = 1, PostOrder = 2 };
 
-template <typename T, TX Order = InOrder, TX Dir = 0>
-class BinaryTreeIterator : public GeneralIterator<BinaryTreeIterator<T, Order, Dir>, BinaryTreeNode<T>> {
+template <typename NodeT, TX Order = InOrder, TX Dir = 0>
+class BinaryTreeIterator : public GeneralIterator<BinaryTreeIterator<NodeT, Order, Dir>, NodeT> {
 public:
-    using Node = BinaryTreeNode<T>;
-    using MySelf = BinaryTreeIterator<T, Order, Dir>;
+    using Node = NodeT;
+    using MySelf = BinaryTreeIterator<NodeT, Order, Dir>;
     using Parent = GeneralIterator<MySelf, Node>;
     using NodePtr = Node*;
     using Parent::Parent;
@@ -39,9 +47,9 @@ public:
     MySelf& operator++();
 };
 
-template <typename T, TX Order, TX Dir>
-auto BinaryTreeIterator<T, Order, Dir>::operator++() -> MySelf& {
-    auto node = Parent::m_ptr;
+template <typename NodeT, TX Order, TX Dir>
+auto BinaryTreeIterator<NodeT, Order, Dir>::operator++() -> MySelf& {
+    NodePtr node = Parent::m_ptr;
     if (node == nullptr)
         return *this;
     NodePtr parent = nullptr;
@@ -51,56 +59,55 @@ auto BinaryTreeIterator<T, Order, Dir>::operator++() -> MySelf& {
                 node = node->m_pChild[1-Dir];
                 while (node->m_pChild[Dir])
                     node = node->m_pChild[Dir];
-                Parent::m_ptr = node;
             } else {
                 parent = node->m_parent;
                 while (parent && node == parent->m_pChild[1-Dir]) {
                     node = parent;
                     parent = parent->m_parent;
                 }
-                Parent::m_ptr = parent;
+                node = parent;
             }
             break;
         case PreOrder:
             if (node->m_pChild[Dir])
-                Parent::m_ptr = node->m_pChild[Dir];
+                node = node->m_pChild[Dir];
             else if (node->m_pChild[1-Dir])
-                Parent::m_ptr = node->m_pChild[1-Dir];
+                node = node->m_pChild[1-Dir];
             else {
                 for (parent = node->m_parent; parent; node = parent, parent = parent->m_parent)
                     if (node == parent->m_pChild[Dir] && parent->m_pChild[1-Dir])
                         break;
-                Parent::m_ptr = parent ? parent->m_pChild[1-Dir] : nullptr;
+                node = parent ? parent->m_pChild[1-Dir] : nullptr;
             }
             break;
         default:
             parent = node->m_parent;
             if (!parent)
-                Parent::m_ptr = nullptr; // la raiz cierra el recorrido
+                node = nullptr;
             else if (node == parent->m_pChild[1-Dir] || !parent->m_pChild[1-Dir])
-                Parent::m_ptr = parent;
+                node = parent;
             else {
                 node = parent->m_pChild[1-Dir];
                 while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
                     node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
-                Parent::m_ptr = node;
             }
             break;
     }
+    Parent::m_ptr = node;
     return *this;
 }
 
-template <typename T>
-using BinaryTreeForwardIterator = BinaryTreeIterator<T, InOrder, 0>;
+template <typename NodeT>
+using BinaryTreeForwardIterator = BinaryTreeIterator<NodeT, InOrder, 0>;
 
-template <typename T>
-using BinaryTreeBackwardIterator = BinaryTreeIterator<T, InOrder, 1>;
+template <typename NodeT>
+using BinaryTreeBackwardIterator = BinaryTreeIterator<NodeT, InOrder, 1>;
 
 template <typename T>
 struct BinaryTreeTraits {
     using Node              = BinaryTreeNode<T>;
-    using ForwardIterator   = BinaryTreeForwardIterator<T>;
-    using BackwardIterator  = BinaryTreeBackwardIterator<T>;
+    using ForwardIterator   = BinaryTreeIterator<Node, InOrder, 0>;
+    using BackwardIterator  = BinaryTreeIterator<Node, InOrder, 1>;
 };
 
 template <typename T>
@@ -108,6 +115,19 @@ struct BinaryTreeAscTraits : public AscendingTraits<T>, public BinaryTreeTraits<
 
 template <typename T>
 struct BinaryTreeDescTraits : public DescendingTraits<T>, public BinaryTreeTraits<T> {};
+
+template <typename Node, typename Compare>
+void BinaryTreeInsert(typename Node::NodePtr& node, const typename Node::value_type& value, Ref ref, Node* parent, Node** leaf_out = nullptr) {
+    if (!node) {
+        node = new Node(value, ref);
+        node->m_parent = parent;
+        if (leaf_out)
+            *leaf_out = node;
+        return;
+    }
+    auto branch = Compare()(node->getValue(), value);
+    BinaryTreeInsert<Node, Compare>(node->m_pChild[branch], value, ref, node, leaf_out);
+}
 
 template <typename Traits, template <typename> typename... Mixins>
 class BaseBinaryTree;
@@ -129,20 +149,60 @@ public:
 
 protected:
     using Parent::m_mutex;
-
-private:
     NodePtr m_root = nullptr; // root of the binary tree
-    void internal_insert(NodePtr& node, const value_type& value, Ref ref, NodePtr parent = nullptr);
 
-    void PrintTree(std::ostream &os, NodePtr node, int depth, const char *connector) const {
+    virtual void PrintNode(std::ostream &os, NodePtr node, Color color) const {
+        PrintColored(os, *node, color, false);
+    }
+
+    struct Rail { std::size_t col; int lo, hi; };
+
+    // numeracion en recorrido derecha-nodo-izquierda (el orden de las lineas)
+    void NumberTree(NodePtr node, int &counter, std::map<NodePtr, int> &idx) const {
+        if (!node)
+            return;
+        NumberTree(node->m_pChild[1], counter, idx);
+        idx[node] = counter++;
+        NumberTree(node->m_pChild[0], counter, idx);
+    }
+
+    void PrintTree(std::ostream &os, NodePtr node, int depth, const std::string &connector, const std::vector<Rail> &rails, const std::map<NodePtr, int> &idx) const {
         if (!node)
             return;
         static const Color kLevelColors[] = {Color::Red, Color::Green, Color::Yellow, Color::Blue, Color::Magenta, Color::Cyan};
-        PrintTree(os, node->m_pChild[1], depth + 1, "┌─ ");
-        os << std::string(depth * 4, ' ') << connector;
-        PrintColored(os, *node, kLevelColors[depth % 6], false);
+        std::string prefix;
+        std::size_t col = 0;
+        for (std::size_t i = 0; i + 1 < rails.size(); ++i) {
+            const Rail &r = rails[i];
+            prefix += std::string(r.col - col, ' ');
+            prefix += (r.lo <= idx.at(node) && idx.at(node) <= r.hi) ? "│" : " ";
+            col = r.col + 1;
+        }
+        if (!rails.empty()) {
+            const Rail &parent = rails.back();
+            prefix += std::string(parent.col - col, ' ');
+            col = parent.col;
+        }
+        std::ostringstream label;
+        PrintNode(label, node, kLevelColors[depth % 6]);
+        bool hasChildren = node->m_pChild[0] || node->m_pChild[1];
+        std::vector<Rail> child;
+        if (hasChildren) {
+            child = rails;
+            Rail me;
+            me.col = col + (connector.empty() ? 0 : 4) + label.str().size() + 1;
+            me.lo = node->m_pChild[1] ? idx.at(node->m_pChild[1]) : idx.at(node);
+            me.hi = node->m_pChild[0] ? idx.at(node->m_pChild[0]) : idx.at(node);
+            child.push_back(me);
+            PrintTree(os, node->m_pChild[1], depth + 1, "┌── ", child, idx);
+        }
+        os << prefix << connector;
+        PrintColored(os, label.str(), kLevelColors[depth % 6], false);
+        if (hasChildren)
+            os << " ┤";
         os << "\n";
-        PrintTree(os, node->m_pChild[0], depth + 1, "└─ ");
+        if (hasChildren)
+            PrintTree(os, node->m_pChild[0], depth + 1, "└── ", child, idx);
     }
 
     NodePtr detach_min(NodePtr sub, NodePtr subParent) {
@@ -158,18 +218,20 @@ private:
             sub->m_pChild[1]->m_parent = subParent;
         return sub;
     }
-    void internal_remove(NodePtr& node, NodePtr parent, const value_type& value, NodePtr* out) {
+    void internal_remove(NodePtr& node, NodePtr parent, const value_type& value, NodePtr* out, NodePtr* lowest) {
         if (!node)
             return;
         if (Compare()(value, node->getValue()))
-            return internal_remove(node->m_pChild[0], node, value, out);
+            return internal_remove(node->m_pChild[0], node, value, out, lowest);
         if (Compare()(node->getValue(), value))
-            return internal_remove(node->m_pChild[1], node, value, out);
+            return internal_remove(node->m_pChild[1], node, value, out, lowest);
         *out = node;
         if (!node->m_pChild[0] || !node->m_pChild[1]) {
             node = node->m_pChild[node->m_pChild[0] ? 0 : 1];
+            *lowest = parent;
         } else {
             NodePtr succ = detach_min(node->m_pChild[1], node);
+            *lowest = (succ->m_parent == node) ? succ : succ->m_parent;
             succ->m_pChild[0] = node->m_pChild[0];
             succ->m_pChild[1] = node->m_pChild[1];
             if (succ->m_pChild[0])
@@ -189,9 +251,9 @@ public:
     BaseBinaryTree(BaseBinaryTree&& another) noexcept { *this = std::move(another); }
     virtual ~BaseBinaryTree() { clear(); }
 
-    void insert(const value_type& value, Ref ref) {
+    virtual void insert(const value_type& value, Ref ref) {
         std::lock_guard lock(this->m_mutex);
-        internal_insert(m_root, value, ref);
+        BinaryTreeInsert<Node, Compare>(m_root, value, ref, nullptr);
     }
     // Move constructor and move assignment operator
     // Constructor and destructor
@@ -204,10 +266,10 @@ public:
 
     void push_back(const value_type& value, Ref ref) override { insert(value, ref); }
 
-    Node remove(const value_type& value) {
+    virtual Node remove(const value_type& value) {
         std::lock_guard lock(this->m_mutex);
-        NodePtr removed = nullptr;
-        internal_remove(m_root, nullptr, value, &removed);
+        NodePtr removed = nullptr, lowest = nullptr;
+        internal_remove(m_root, nullptr, value, &removed, &lowest);
         if (!removed)
             return Node();
         Node result(removed->getValue(), removed->getRef());
@@ -223,55 +285,43 @@ public:
     BackwardIterator rbegin() const;
     BackwardIterator rend() const { return BackwardIterator(nullptr); }
 
-    // Primer nodo del recorrido (Order, Dir): la raiz en preorden; en
-    // inorden se baja por el hijo Dir; en postorden se prefiere Dir.
     template <TX Order, TX Dir>
     NodePtr first_node(NodePtr node) const {
-        if (!node)
-            return node;
-        if (Order == PreOrder)
-            return node;
-        if (Order == InOrder) {
-            while (node->m_pChild[Dir])
-                node = node->m_pChild[Dir];
-            return node;
+        if (node && Order != PreOrder) {
+            if (Order == InOrder) {
+                while (node->m_pChild[Dir])
+                    node = node->m_pChild[Dir];
+            } else {
+                while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
+                    node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
+            }
         }
-        while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
-            node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
         return node;
     }
 
-    // begin/end para cualquiera de los 6 recorridos, p.ej. begin<PreOrder, 1>()
     template <TX Order, TX Dir = 0>
-    BinaryTreeIterator<value_type, Order, Dir> begin() const {
-        return BinaryTreeIterator<value_type, Order, Dir>(first_node<Order, Dir>(m_root));
+    BinaryTreeIterator<Node, Order, Dir> begin() const {
+        return BinaryTreeIterator<Node, Order, Dir>(first_node<Order, Dir>(m_root));
     }
 
     template <TX Order, TX Dir = 0>
-    BinaryTreeIterator<value_type, Order, Dir> end() const {
-        return BinaryTreeIterator<value_type, Order, Dir>(nullptr);
+    BinaryTreeIterator<Node, Order, Dir> end() const {
+        return BinaryTreeIterator<Node, Order, Dir>(nullptr);
     }
 
     NodePtr GetRoot() const { return m_root; }
 
     virtual void PrintTree(std::ostream &os = std::cout) const {
-        PrintTree(os, m_root, 0, "");
+        std::map<NodePtr, int> idx;
+        int counter = 0;
+        NumberTree(m_root, counter, idx);
+        PrintTree(os, m_root, 0, "", {}, idx);
+        os << "\n\n";
     }
 
     BaseBinaryTree& operator=(const BaseBinaryTree& another);
     BaseBinaryTree& operator=(BaseBinaryTree&& another) noexcept;
 };
-
-template <typename Traits, template <typename> typename... Mixins>
-void BaseBinaryTree<Traits, Mixins...>::internal_insert(NodePtr& node, const value_type& value, Ref ref, NodePtr parent) {
-    if (!node) {
-        node = new Node(value, ref);
-        node->m_parent = parent;
-        return;
-    }
-    auto branch = Compare()(node->getValue(), value);
-    internal_insert(node->m_pChild[branch], value, ref, node); // Tail recursion to insert in the correct branch
-}
 
 template <typename Traits, template <typename> typename... Mixins>
 void BaseBinaryTree<Traits, Mixins...>::clear() {

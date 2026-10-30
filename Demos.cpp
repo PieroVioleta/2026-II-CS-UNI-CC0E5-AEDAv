@@ -11,6 +11,7 @@
 #include "containers/circulardoublelinkedlist.h"
 #include "containers/Heap.h"
 #include "containers/binarytree.h"
+#include "containers/AVLTree.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -321,8 +322,6 @@ void DemoHeap() {
     TestHeap(maxHeap);
 }
 
-// Recorre el arbol con el iterador unico en el orden (Order, Dir):
-// un mismo tipo sirve los 6 recorridos in/pre/post x asc/desc.
 template <TX Order, TX Dir = 0, typename TreeContainer>
 void TestTreeOrder(TreeContainer &tree, const char *title, Color color) {
     PrintColored(cout, title, color, false);
@@ -344,7 +343,6 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     cout << "Arbol girado 90 grados (arriba = hijo derecho):\n";
     tree.PrintTree();
 
-    // El mismo iterador recorre el arbol de 6 formas
     cout << "Los 6 recorridos con un solo iterador:\n";
     TestTreeOrder<InOrder>(tree, "inorden asc", Color::Green);
     TestTreeOrder<InOrder, 1>(tree, "inorden desc", Color::Green);
@@ -393,4 +391,29 @@ void DemoBinaryTree() {
     PrintColored(cout, "Pruebas para BinaryTree", Color::Yellow);
     BinaryTree<BinaryTreeAscTraits<TX>> tree;
     TestBinaryTree(tree, "binarytree.txt");
+}
+
+void DemoAVLTree() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para AVLTree (reutiliza BinaryTree)", Color::Yellow);
+
+    AVLTree<AVLTreeAscTraits<TX>> rotations;
+    for (int v : {30, 10, 20}) {
+        rotations.insert(TX(v), TX(v / 10));
+        cout << "Insert " << v << ":\n";
+        rotations.PrintTree();
+    }
+
+    // El mismo demo del BinaryTree
+    // Secuencia creciente: en un BST quedaria cadena de altura 7
+    cout << "Insertando solo hacia la derecha (10..70):\n";
+    AVLTree<AVLTreeAscTraits<TX>> chain;
+    for (int v : {10, 20, 30, 40, 50, 60, 70}) {
+        chain.insert(TX(v), TX(v / 10));
+        cout << "Insert " << v << ":\n";
+        chain.PrintTree();
+    }
+
+    AVLTree<AVLTreeAscTraits<TX>> tree;
+    TestBinaryTree(tree, "avltree.txt");
 }
