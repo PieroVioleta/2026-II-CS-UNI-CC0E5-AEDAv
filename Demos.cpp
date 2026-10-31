@@ -323,7 +323,7 @@ void DemoHeap() {
 }
 
 template <TX Order, TX Dir = Asc, typename TreeContainer>
-void TestTreeOrder(TreeContainer &tree, const char *title, Color color) {
+void TestTreeOrder(TreeContainer &tree, const string &title, Color color) {
     PrintColored(cout, title, color, false);
     cout << ": ";
     for (auto it = tree.template begin<Order, Dir>(); it != tree.template end<Order, Dir>(); ++it)
@@ -398,8 +398,8 @@ void DemoAVLTree() {
     PrintColored(cout, "Pruebas para AVLTree (reutiliza BinaryTree)", Color::Yellow);
 
     AVLTree<AVLTreeAscTraits<TX>> rotations;
-    for (int v : {30, 10, 20}) {
-        rotations.insert(TX(v), TX(v / 10));
+    for (TX v : {30, 10, 20}) {
+        rotations.insert(v, v / 10);
         cout << "Insert " << v << ":\n";
         rotations.PrintTree();
     }
@@ -408,8 +408,8 @@ void DemoAVLTree() {
     // Secuencia creciente: en un BST quedaria cadena de altura 7
     cout << "Insertando solo hacia la derecha (10..70):\n";
     AVLTree<AVLTreeAscTraits<TX>> chain;
-    for (int v : {10, 20, 30, 40, 50, 60, 70}) {
-        chain.insert(TX(v), TX(v / 10));
+    for (TX v : {10, 20, 30, 40, 50, 60, 70}) {
+        chain.insert(v, v / 10);
         cout << "Insert " << v << ":\n";
         chain.PrintTree();
     }

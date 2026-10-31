@@ -50,51 +50,47 @@ public:
 
 template <typename NodeT, TX Order, TX Dir>
 auto BinaryTreeIterator<NodeT, Order, Dir>::operator++() -> MySelf& {
-    NodePtr node = Parent::m_ptr;
-    if (node == nullptr)
-        return *this;
-    NodePtr parent = nullptr;
+    constexpr int First = Dir, Second = 1 - Dir; // orden de visita de hijos
+
+    NodePtr n = Parent::m_ptr;
+    if (!n) return *this;
+
+    // primer hijo en el recorrido
+    auto firstChild = [](NodePtr x) { return x->m_pChild[First] ? x->m_pChild[First] : x->m_pChild[Second]; };
+
+    // hoja siguiendo el primer hijo
+    auto firstLeaf = [&](NodePtr x) { while (NodePtr c = firstChild(x)) x = c; return x; };
+
+    // hermano Second del ancestro donde x es hijo First
+    auto nextSibling = [](NodePtr x) {
+        NodePtr p = x->m_parent;
+        while (p && (x != p->m_pChild[First] || !p->m_pChild[Second]))
+            x = p, p = p->m_parent;
+        return p ? p->m_pChild[Second] : nullptr;
+    };
+
     switch (Order) {
         case InOrder:
-            if (node->m_pChild[1-Dir]) {
-                node = node->m_pChild[1-Dir];
-                while (node->m_pChild[Dir])
-                    node = node->m_pChild[Dir];
+            if (NodePtr r = n->m_pChild[Second]) {
+                while (r->m_pChild[First]) r = r->m_pChild[First];
+                n = r;
             } else {
-                parent = node->m_parent;
-                while (parent && node == parent->m_pChild[1-Dir]) {
-                    node = parent;
-                    parent = parent->m_parent;
-                }
-                node = parent;
+                NodePtr p = n->m_parent;
+                for (; p && n == p->m_pChild[Second]; n = p, p = p->m_parent);
+                n = p;
             }
             break;
         case PreOrder:
-            if (node->m_pChild[Dir])
-                node = node->m_pChild[Dir];
-            else if (node->m_pChild[1-Dir])
-                node = node->m_pChild[1-Dir];
-            else {
-                for (parent = node->m_parent; parent; node = parent, parent = parent->m_parent)
-                    if (node == parent->m_pChild[Dir] && parent->m_pChild[1-Dir])
-                        break;
-                node = parent ? parent->m_pChild[1-Dir] : nullptr;
-            }
+            n = firstChild(n) ? firstChild(n) : nextSibling(n);
             break;
-        default:
-            parent = node->m_parent;
-            if (!parent)
-                node = nullptr;
-            else if (node == parent->m_pChild[1-Dir] || !parent->m_pChild[1-Dir])
-                node = parent;
-            else {
-                node = parent->m_pChild[1-Dir];
-                while (node->m_pChild[Dir] || node->m_pChild[1-Dir])
-                    node = node->m_pChild[node->m_pChild[Dir] ? Dir : 1-Dir];
-            }
+        default: { // PostOrder
+            NodePtr p = n->m_parent, sib = p ? p->m_pChild[Second] : nullptr;
+            n = (sib && n != sib) ? firstLeaf(sib) : p;
             break;
+        }
     }
-    Parent::m_ptr = node;
+
+    Parent::m_ptr = n;
     return *this;
 }
 
@@ -182,10 +178,10 @@ protected:
     // linea de un nodo via el camino a la raiz
     void PrintLine(std::ostream &os, NodePtr node) const {
         static const Color kLevelColors[] = {Color::Red, Color::Green, Color::Yellow, Color::Blue, Color::Magenta, Color::Cyan}; // colores por nivel
-        int depth = 0;
+        TX depth = 0;
         for (NodePtr p = node->m_parent; p; p = p->m_parent) ++depth;
-        std::size_t col = 0;
-        const char *connector = "";
+        size_t col = 0;
+        string connector = "";
         if (node->m_parent) {
             bool right = node == node->m_parent->m_pChild[1];
             std::size_t pcol = PrintPrefix(os, node->m_parent, right, false, true, col);

@@ -8,7 +8,7 @@ class AVLNode : public BaseBinaryNode<T, AVLNode<T>> {
 public:
     using Parent = BaseBinaryNode<T, AVLNode<T>>;
     using Parent::Parent;
-    int m_height = 1;
+    TX m_height = 1;
 };
 
 template <typename T>
@@ -40,13 +40,13 @@ protected:
     using Parent::internal_remove;
 
 private:
-    static int Height(NodePtr node) { return node ? node->m_height : 0; }
+    static TX Height(NodePtr node) { return node ? node->m_height : 0; }
     static void UpdateHeight(NodePtr node) {
         node->m_height = 1 + std::max(Height(node->m_pChild[0]), Height(node->m_pChild[1]));
     }
 
     // Rotacion simple hacia Dir
-    NodePtr Rotate(NodePtr x, int dir) {
+    NodePtr Rotate(NodePtr x, TX dir) {
         NodePtr y = x->m_pChild[1-dir];
         x->m_pChild[1-dir] = y->m_pChild[dir];
         if (y->m_pChild[dir])
@@ -63,14 +63,14 @@ private:
     void RebalanceSubir(NodePtr from, bool cut_on_first_rotation) {
         for (NodePtr n = from; n; ) {
             UpdateHeight(n);
-            int balance = Height(n->m_pChild[1]) - Height(n->m_pChild[0]);
+            TX balance = Height(n->m_pChild[1]) - Height(n->m_pChild[0]);
             if (balance > -2 && balance < 2) {
                 n = n->m_parent;
                 continue;
             }
             NodePtr old = n;
             NodePtr child = n->m_pChild[balance > 0 ? 1 : 0];
-            int cbalance = Height(child->m_pChild[1]) - Height(child->m_pChild[0]);
+            TX cbalance = Height(child->m_pChild[1]) - Height(child->m_pChild[0]);
             if (balance > 0) {
                 if (cbalance < 0)
                     n->m_pChild[1] = Rotate(n->m_pChild[1], 1);
