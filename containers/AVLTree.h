@@ -99,7 +99,7 @@ public:
 
     Node remove(const value_type& value) override {
         std::lock_guard lock(this->m_mutex);
-        NodePtr removed = nullptr, lowest = nullptr; // lowest: ancestro mas bajo tocado
+        NodePtr removed = nullptr, lowest = nullptr;
         internal_remove(m_root, nullptr, value, &removed, &lowest);
         if (!removed)
             return Node();
