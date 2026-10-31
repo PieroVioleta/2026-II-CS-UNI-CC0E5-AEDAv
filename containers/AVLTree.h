@@ -27,7 +27,6 @@ struct AVLTreeDescTraits : public DescendingTraits<T>, public AVLTreeTraits<T> {
 template <typename Traits>
 class AVLTree : public BinaryTree<Traits> {
 public:
-    using MySelf = AVLTree;
     using Parent = BinaryTree<Traits>;
     using typename Parent::value_type;
     using typename Parent::Node;
@@ -45,7 +44,6 @@ private:
         node->m_height = 1 + std::max(Height(node->m_pChild[0]), Height(node->m_pChild[1]));
     }
 
-    // Rotacion simple hacia Dir
     NodePtr Rotate(NodePtr x, TX dir) {
         NodePtr y = x->m_pChild[1-dir];
         x->m_pChild[1-dir] = y->m_pChild[dir];
@@ -59,8 +57,8 @@ private:
         return y;
     }
 
-    // Redistribution
-    void RebalanceSubir(NodePtr from, bool cut_on_first_rotation) {
+    // sube hasta la raiz
+    void Redistribution(NodePtr from, bool cut_on_first_rotation) {
         for (NodePtr n = from; n; ) {
             UpdateHeight(n);
             TX balance = Height(n->m_pChild[1]) - Height(n->m_pChild[0]);
@@ -92,24 +90,22 @@ private:
     }
 
 public:
-    AVLTree() = default;
-
     void insert(const value_type& value, Ref ref) override {
         std::lock_guard lock(this->m_mutex);
         NodePtr leaf = nullptr;
         BinaryTreeInsert<Node, Compare>(m_root, value, ref, nullptr, &leaf);
-        RebalanceSubir(leaf, true);
+        Redistribution(leaf, true);
     }
 
     Node remove(const value_type& value) override {
         std::lock_guard lock(this->m_mutex);
-        NodePtr removed = nullptr, lowest = nullptr;
+        NodePtr removed = nullptr, lowest = nullptr; // lowest: ancestro mas bajo tocado
         internal_remove(m_root, nullptr, value, &removed, &lowest);
         if (!removed)
             return Node();
         Node result(removed->getValue(), removed->getRef());
         delete removed;
-        RebalanceSubir(lowest, false);
+        Redistribution(lowest, false);
         return result;
     }
 
