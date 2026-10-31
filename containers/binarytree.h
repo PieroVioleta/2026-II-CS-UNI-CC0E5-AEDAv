@@ -5,10 +5,8 @@
 #include "GeneralContainer.h"
 #include "mixins.h"
 #include "../utilities/printcolored.h"
-#include <map>
 #include <sstream>
 #include <string>
-#include <vector>
 
 template <typename T, typename Derived>
 class BaseBinaryNode : public GeneralNode<T> {
@@ -33,8 +31,9 @@ public:
 };
 
 enum TraversalOrder : TX { InOrder = 0, PreOrder = 1, PostOrder = 2 };
+enum TraversalDir    : TX { Asc = 0, Desc = 1 };
 
-template <typename NodeT, TX Order = InOrder, TX Dir = 0>
+template <typename NodeT, TX Order = InOrder, TX Dir = Asc>
 class BinaryTreeIterator : public GeneralIterator<BinaryTreeIterator<NodeT, Order, Dir>, NodeT> {
 public:
     using Node = NodeT;
@@ -43,6 +42,8 @@ public:
     using NodePtr = Node*;
     using Parent::Parent;
     NodePtr m_parent = nullptr;
+
+    NodePtr GetNode() const { return Parent::m_ptr; }
 
     MySelf& operator++();
 };
@@ -98,16 +99,16 @@ auto BinaryTreeIterator<NodeT, Order, Dir>::operator++() -> MySelf& {
 }
 
 template <typename NodeT>
-using BinaryTreeForwardIterator = BinaryTreeIterator<NodeT, InOrder, 0>;
+using BinaryTreeForwardIterator = BinaryTreeIterator<NodeT, InOrder, Asc>;
 
 template <typename NodeT>
-using BinaryTreeBackwardIterator = BinaryTreeIterator<NodeT, InOrder, 1>;
+using BinaryTreeBackwardIterator = BinaryTreeIterator<NodeT, InOrder, Desc>;
 
 template <typename T>
 struct BinaryTreeTraits {
     using Node              = BinaryTreeNode<T>;
-    using ForwardIterator   = BinaryTreeIterator<Node, InOrder, 0>;
-    using BackwardIterator  = BinaryTreeIterator<Node, InOrder, 1>;
+    using ForwardIterator   = BinaryTreeIterator<Node, InOrder, Asc>;
+    using BackwardIterator  = BinaryTreeIterator<Node, InOrder, Desc>;
 };
 
 template <typename T>
@@ -155,54 +156,50 @@ protected:
         PrintColored(os, *node, color, false);
     }
 
-    struct Rail { std::size_t col; int lo, hi; };
-
-    // numeracion en recorrido derecha-nodo-izquierda (el orden de las lineas)
-    void NumberTree(NodePtr node, int &counter, std::map<NodePtr, int> &idx) const {
-        if (!node)
-            return;
-        NumberTree(node->m_pChild[1], counter, idx);
-        idx[node] = counter++;
-        NumberTree(node->m_pChild[0], counter, idx);
+    // ancho visible del label
+    std::size_t LabelWidth(NodePtr node) const {
+        std::ostringstream label;
+        PrintNode(label, node, Color::White);
+        return label.str().size();
     }
 
-    void PrintTree(std::ostream &os, NodePtr node, int depth, const std::string &connector, const std::vector<Rail> &rails, const std::map<NodePtr, int> &idx) const {
-        if (!node)
-            return;
-        static const Color kLevelColors[] = {Color::Red, Color::Green, Color::Yellow, Color::Blue, Color::Magenta, Color::Cyan};
-        std::string prefix;
+    // sube a la raiz; al volver emite el riel de cada ancestro
+    std::size_t PrintPrefix(std::ostream &os, NodePtr node, bool rightIn, bool bendIn, bool direct, std::size_t &col) const {
+        std::size_t c;
+        if (node->m_parent) {
+            bool right = node == node->m_parent->m_pChild[1];
+            c = PrintPrefix(os, node->m_parent, right, rightIn != right, false, col) + 4 + LabelWidth(node) + 1;
+        } else {
+            c = LabelWidth(node) + 1;
+        }
+        if (!direct) {
+            os << std::string(c - col, ' ') << (bendIn ? "│" : " ");
+            col = c + 1;
+        }
+        return c;
+    }
+
+    // linea de un nodo via el camino a la raiz
+    void PrintLine(std::ostream &os, NodePtr node) const {
+        static const Color kLevelColors[] = {Color::Red, Color::Green, Color::Yellow, Color::Blue, Color::Magenta, Color::Cyan}; // colores por nivel
+        int depth = 0;
+        for (NodePtr p = node->m_parent; p; p = p->m_parent) ++depth;
         std::size_t col = 0;
-        for (std::size_t i = 0; i + 1 < rails.size(); ++i) {
-            const Rail &r = rails[i];
-            prefix += std::string(r.col - col, ' ');
-            prefix += (r.lo <= idx.at(node) && idx.at(node) <= r.hi) ? "│" : " ";
-            col = r.col + 1;
+        const char *connector = "";
+        if (node->m_parent) {
+            bool right = node == node->m_parent->m_pChild[1];
+            std::size_t pcol = PrintPrefix(os, node->m_parent, right, false, true, col);
+            os << std::string(pcol - col, ' ');
+            connector = right ? "┌── " : "└── ";
         }
-        if (!rails.empty()) {
-            const Rail &parent = rails.back();
-            prefix += std::string(parent.col - col, ' ');
-            col = parent.col;
-        }
+        // label del nodo
         std::ostringstream label;
         PrintNode(label, node, kLevelColors[depth % 6]);
-        bool hasChildren = node->m_pChild[0] || node->m_pChild[1];
-        std::vector<Rail> child;
-        if (hasChildren) {
-            child = rails;
-            Rail me;
-            me.col = col + (connector.empty() ? 0 : 4) + label.str().size() + 1;
-            me.lo = node->m_pChild[1] ? idx.at(node->m_pChild[1]) : idx.at(node);
-            me.hi = node->m_pChild[0] ? idx.at(node->m_pChild[0]) : idx.at(node);
-            child.push_back(me);
-            PrintTree(os, node->m_pChild[1], depth + 1, "┌── ", child, idx);
-        }
-        os << prefix << connector;
+        os << connector;
         PrintColored(os, label.str(), kLevelColors[depth % 6], false);
-        if (hasChildren)
+        if (node->m_pChild[0] || node->m_pChild[1])
             os << " ┤";
         os << "\n";
-        if (hasChildren)
-            PrintTree(os, node->m_pChild[0], depth + 1, "└── ", child, idx);
     }
 
     NodePtr detach_min(NodePtr sub, NodePtr subParent) {
@@ -299,12 +296,12 @@ public:
         return node;
     }
 
-    template <TX Order, TX Dir = 0>
+    template <TX Order, TX Dir = Asc>
     BinaryTreeIterator<Node, Order, Dir> begin() const {
         return BinaryTreeIterator<Node, Order, Dir>(first_node<Order, Dir>(m_root));
     }
 
-    template <TX Order, TX Dir = 0>
+    template <TX Order, TX Dir = Asc>
     BinaryTreeIterator<Node, Order, Dir> end() const {
         return BinaryTreeIterator<Node, Order, Dir>(nullptr);
     }
@@ -312,10 +309,9 @@ public:
     NodePtr GetRoot() const { return m_root; }
 
     virtual void PrintTree(std::ostream &os = std::cout) const {
-        std::map<NodePtr, int> idx;
-        int counter = 0;
-        NumberTree(m_root, counter, idx);
-        PrintTree(os, m_root, 0, "", {}, idx);
+        // lineas en inorden desc
+        for (auto it = begin<InOrder, Desc>(); it != end<InOrder, Desc>(); ++it)
+            PrintLine(os, it.GetNode());
         os << "\n\n";
     }
 

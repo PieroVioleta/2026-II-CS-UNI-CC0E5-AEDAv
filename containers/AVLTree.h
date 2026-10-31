@@ -14,8 +14,8 @@ public:
 template <typename T>
 struct AVLTreeTraits {
     using Node              = AVLNode<T>;
-    using ForwardIterator   = BinaryTreeIterator<Node, InOrder, 0>;
-    using BackwardIterator  = BinaryTreeIterator<Node, InOrder, 1>;
+    using ForwardIterator   = BinaryTreeIterator<Node, InOrder, Asc>;
+    using BackwardIterator  = BinaryTreeIterator<Node, InOrder, Desc>;
 };
 
 template <typename T>

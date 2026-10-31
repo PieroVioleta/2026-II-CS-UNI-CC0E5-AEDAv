@@ -322,7 +322,7 @@ void DemoHeap() {
     TestHeap(maxHeap);
 }
 
-template <TX Order, TX Dir = 0, typename TreeContainer>
+template <TX Order, TX Dir = Asc, typename TreeContainer>
 void TestTreeOrder(TreeContainer &tree, const char *title, Color color) {
     PrintColored(cout, title, color, false);
     cout << ": ";
@@ -345,11 +345,11 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
 
     cout << "Los 6 recorridos con un solo iterador:\n";
     TestTreeOrder<InOrder>(tree, "inorden asc", Color::Green);
-    TestTreeOrder<InOrder, 1>(tree, "inorden desc", Color::Green);
+    TestTreeOrder<InOrder, Desc>(tree, "inorden desc", Color::Green);
     TestTreeOrder<PreOrder>(tree, "preorden asc", Color::Yellow);
-    TestTreeOrder<PreOrder, 1>(tree, "preorden desc", Color::Yellow);
+    TestTreeOrder<PreOrder, Desc>(tree, "preorden desc", Color::Yellow);
     TestTreeOrder<PostOrder>(tree, "postorden asc", Color::Cyan);
-    TestTreeOrder<PostOrder, 1>(tree, "postorden desc", Color::Cyan);
+    TestTreeOrder<PostOrder, Desc>(tree, "postorden desc", Color::Cyan);
 
     // Pruebas de remove
     auto removed = tree.remove(20);
