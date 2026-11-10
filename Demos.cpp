@@ -12,6 +12,7 @@
 #include "containers/Heap.h"
 #include "containers/binarytree.h"
 #include "containers/AVLTree.h"
+#include "containers/HashTable.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -416,4 +417,26 @@ void DemoAVLTree() {
 
     AVLTree<AVLTreeAscTraits<TX>> tree;
     TestBinaryTree(tree, "avltree.txt");
+}
+
+void DemoHashTable() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para HashTable (1 AVL interno)", Color::Yellow);
+
+    HashTable<HashAscTraits<TX>> m;
+    cout << "m[5] = 54:\n";
+    m[5] = 54;
+    m.PrintTree();
+
+    cout << "Altas encadenadas:\n";
+    for (TX v : {3, 8, 1, 10, 2, 6}) {
+        Ref val = (v * 37 + 11) % 100;
+        m[v] = val;
+        cout << "m[" << v << "] = " << val << ":\n";
+        m.PrintTree();
+    }
+
+    // Lectura de key inexistente
+    cout << "m[20] = " << m[20] << " (alta automatica):\n";
+    m.PrintTree();
 }

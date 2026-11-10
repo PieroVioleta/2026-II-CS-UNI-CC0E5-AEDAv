@@ -57,6 +57,7 @@ private:
         return y;
     }
 
+protected:
     // sube hasta la raiz
     void Redistribution(NodePtr from, bool cut_on_first_rotation) {
         for (NodePtr n = from; n; ) {
@@ -89,12 +90,18 @@ private:
         }
     }
 
-public:
-    void insert(const value_type& value, Ref ref) override {
-        std::lock_guard lock(this->m_mutex);
+protected:
+    NodePtr insert_unlocked(const value_type& value, Ref ref) {
         NodePtr leaf = nullptr;
         BinaryTreeInsert<Node, Compare>(m_root, value, ref, nullptr, &leaf);
         Redistribution(leaf, true);
+        return leaf;
+    }
+
+public:
+    void insert(const value_type& value, Ref ref) override {
+        std::lock_guard lock(this->m_mutex);
+        insert_unlocked(value, ref);
     }
 
     Node remove(const value_type& value) override {

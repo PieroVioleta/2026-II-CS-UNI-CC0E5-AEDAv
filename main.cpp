@@ -13,5 +13,6 @@ int main() {
     DemoHeap();
     DemoBinaryTree();
     DemoAVLTree();
+    DemoHashTable();
     return 0;
 }
