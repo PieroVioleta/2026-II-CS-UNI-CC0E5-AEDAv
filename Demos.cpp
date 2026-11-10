@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream> // ofstream para escribir en archivo
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -439,4 +440,20 @@ void DemoHashTable() {
     // Lectura de key inexistente
     cout << "m[20] = " << m[20] << " (alta automatica):\n";
     m.PrintTree();
+
+    // Persistencia: operator<< escribe el avl (inorden), operator>> lo lee
+    cout << "operator<< escribe el avl:\n";
+    stringstream ss;
+    ss << m;
+    cout << ss.str() << "\n";
+
+    // Round-trip: leer en otro hash y volver a escribir
+    HashTable<HashAscTraits<TX>> m2;
+    ss >> m2;
+    cout << "operator>> lee el avl:\n";
+    m2.PrintTree();
+    stringstream ss2;
+    ss2 << m2;
+    cout << "Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << ":\n";
+    cout << ss2.str() << "\n";
 }

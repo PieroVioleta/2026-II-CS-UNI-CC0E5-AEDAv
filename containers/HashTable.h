@@ -22,6 +22,7 @@ class HashTable : public AVLTree<Traits> {
 public:
     using Parent = AVLTree<Traits>;
     using typename Parent::value_type;
+    using typename Parent::Node;
     using typename Parent::NodePtr;
     using typename Parent::Compare;
 
@@ -32,6 +33,21 @@ public:
         if (!n)
             n = this->insert_unlocked(key, Ref{});
         return n->ref();
+    }
+
+    // escribe el avl en inorden: (clave,valor) por nodo
+    friend std::ostream& operator<<(std::ostream& os, const HashTable& h) {
+        for (auto it = h.begin(); it != h.end(); ++it)
+            os << *it << ' ';
+        return os;
+    }
+
+    // lee el avl: (clave,valor) por nodo
+    friend std::istream& operator>>(std::istream& is, HashTable& h) {
+        Node n;
+        while (is >> n)
+            h.insert(n.getValue(), n.getRef());
+        return is;
     }
 
 private:
