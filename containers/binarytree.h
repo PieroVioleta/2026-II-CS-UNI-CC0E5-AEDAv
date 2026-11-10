@@ -45,52 +45,53 @@ public:
 
     NodePtr GetNode() const { return Parent::m_ptr; }
 
+private:
+    static constexpr TX First = Dir, Second = 1 - Dir; 
+    // primer hijo en el recorrido
+    static NodePtr firstChild(NodePtr x) { return x->m_pChild[First] ? x->m_pChild[First] : x->m_pChild[Second]; }
+
+    // hoja siguiendo el primer hijo
+    static NodePtr firstLeaf(NodePtr x) { while (NodePtr c = firstChild(x)) x = c; return x; }
+
+    // hermano Second del ancestro donde x es hijo First
+    static NodePtr nextSibling(NodePtr x) {
+        NodePtr p = x->m_parent;
+        while (p && (x != p->m_pChild[First] || !p->m_pChild[Second]))
+            x = p, p = p->m_parent;
+        return p ? p->m_pChild[Second] : nullptr;
+    }
+
+    static NodePtr nextInOrder(NodePtr n) {
+        if (NodePtr r = n->m_pChild[Second]) {
+            while (r->m_pChild[First]) r = r->m_pChild[First];
+            return r;
+        }
+        NodePtr p = n->m_parent;
+        for (; p && n == p->m_pChild[Second]; n = p, p = p->m_parent);
+        return p;
+    }
+
+    static NodePtr nextPreOrder(NodePtr n) {
+        return firstChild(n) ? firstChild(n) : nextSibling(n);
+    }
+
+    static NodePtr nextPostOrder(NodePtr n) {
+        NodePtr p = n->m_parent, sib = p ? p->m_pChild[Second] : nullptr;
+        return (sib && n != sib) ? firstLeaf(sib) : p;
+    }
+    
+    using NextFn = NodePtr (*)(NodePtr);
+    static constexpr NextFn kNext[] = {&nextInOrder, &nextPreOrder, &nextPostOrder};
+
+public:
     MySelf& operator++();
 };
 
 template <typename NodeT, TX Order, TX Dir>
 auto BinaryTreeIterator<NodeT, Order, Dir>::operator++() -> MySelf& {
-    constexpr int First = Dir, Second = 1 - Dir; // orden de visita de hijos
-
     NodePtr n = Parent::m_ptr;
     if (!n) return *this;
-
-    // primer hijo en el recorrido
-    auto firstChild = [](NodePtr x) { return x->m_pChild[First] ? x->m_pChild[First] : x->m_pChild[Second]; };
-
-    // hoja siguiendo el primer hijo
-    auto firstLeaf = [&](NodePtr x) { while (NodePtr c = firstChild(x)) x = c; return x; };
-
-    // hermano Second del ancestro donde x es hijo First
-    auto nextSibling = [](NodePtr x) {
-        NodePtr p = x->m_parent;
-        while (p && (x != p->m_pChild[First] || !p->m_pChild[Second]))
-            x = p, p = p->m_parent;
-        return p ? p->m_pChild[Second] : nullptr;
-    };
-
-    switch (Order) {
-        case InOrder:
-            if (NodePtr r = n->m_pChild[Second]) {
-                while (r->m_pChild[First]) r = r->m_pChild[First];
-                n = r;
-            } else {
-                NodePtr p = n->m_parent;
-                for (; p && n == p->m_pChild[Second]; n = p, p = p->m_parent);
-                n = p;
-            }
-            break;
-        case PreOrder:
-            n = firstChild(n) ? firstChild(n) : nextSibling(n);
-            break;
-        default: { // PostOrder
-            NodePtr p = n->m_parent, sib = p ? p->m_pChild[Second] : nullptr;
-            n = (sib && n != sib) ? firstLeaf(sib) : p;
-            break;
-        }
-    }
-
-    Parent::m_ptr = n;
+    Parent::m_ptr = kNext[Order](n);
     return *this;
 }
 

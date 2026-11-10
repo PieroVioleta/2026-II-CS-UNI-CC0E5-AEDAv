@@ -340,7 +340,7 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     // Recorrido in-order
     TestTraversal(tree);
 
-    cout << "Arbol girado 90 grados (arriba = hijo derecho):\n";
+    cout << "Arbol horizontal:\n";
     tree.PrintTree();
 
     cout << "Los 6 recorridos con un solo iterador:\n";
@@ -395,7 +395,7 @@ void DemoBinaryTree() {
 
 void DemoAVLTree() {
     cout << "\n";
-    PrintColored(cout, "Pruebas para AVLTree (reutiliza BinaryTree)", Color::Yellow);
+    PrintColored(cout, "Pruebas para AVLTree", Color::Yellow);
 
     AVLTree<AVLTreeAscTraits<TX>> rotations;
     for (TX v : {30, 10, 20}) {
