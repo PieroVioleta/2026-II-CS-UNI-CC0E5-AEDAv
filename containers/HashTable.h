@@ -2,8 +2,6 @@
 #define __HASHTABLE_H__
 #include "AVLTree.h"
 
-// Hash ilimitado: 1 solo AVL internamente
-// clave = value del nodo, valor asociado = ref del nodo
 template <typename T>
 struct HashTraits {
     using Node              = AVLNode<T>;
@@ -26,7 +24,6 @@ public:
     using typename Parent::NodePtr;
     using typename Parent::Compare;
 
-    // m[clave] = valor; alta automatica con 0 si la clave no existe
     Ref& operator[](const value_type& key) {
         std::lock_guard lock(this->m_mutex);
         NodePtr n = find_key(this->m_root, key);
@@ -35,14 +32,12 @@ public:
         return n->ref();
     }
 
-    // escribe el avl en inorden: (clave,valor) por nodo
     friend std::ostream& operator<<(std::ostream& os, const HashTable& h) {
         for (auto it = h.begin(); it != h.end(); ++it)
             os << *it << ' ';
         return os;
     }
 
-    // lee el avl: (clave,valor) por nodo
     friend std::istream& operator>>(std::istream& is, HashTable& h) {
         Node n;
         while (is >> n)

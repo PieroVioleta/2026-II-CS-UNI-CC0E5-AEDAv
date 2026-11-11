@@ -15,7 +15,6 @@ inline TXX HashFnv(const std::string& data) {
     return h;
 }
 
-// Nodo Merkle: value = hash, ref = dato de la hoja
 template <typename T>
 class MerkleNode : public BaseBinaryNode<T, MerkleNode<T>> {
 public:
