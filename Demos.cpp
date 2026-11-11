@@ -482,7 +482,7 @@ void DemoMerkleTree() {
     m.PrintTree();
     cout << "raiz: " << hex << m.Root() << dec << "\n";
 
-    // Integridad: los datos vienen del HashTable
+    // Integridad: los datos viven en el HashTable, la raiz es su huella
     HashTable<HashAscTraits<TX>> h;
     h[5] = 54;
     h[3] = 22;
@@ -497,27 +497,41 @@ void DemoMerkleTree() {
             b.push_back("(" + to_string((*it).getValue()) + "," + to_string((*it).getRef()) + ")", b.size());
     };
 
+    // 1) dataset original
     llenar_bloques(h, bloques);
     m.Build(bloques);
     TXX r0 = m.Root();
-    cout << "\nraiz del hash: " << hex << r0 << dec << "\n";
+    PrintColored(cout, "1) Dataset original", Color::Green);
+    cout << "   datos: h[5]=54  h[3]=22  h[8]=7  h[1]=48\n";
+    cout << "   bloques: ";
+    for (const auto& b : bloques)
+        cout << b.getValue() << " ";
+    cout << "\n   raiz: " << hex << r0 << dec << "\n";
     m.PrintTree();
 
-    // mismos datos -> misma raiz (determinismo)
+    // 2) determinismo: mismos datos, misma raiz
     llenar_bloques(h, bloques);
     m.Build(bloques);
-    cout << "rebuild sin cambios: " << (m.Root() == r0 ? "misma raiz" : "DIFERENTE") << "\n";
+    cout << "2) Reconstruir sin cambiar nada: "
+         << (m.Root() == r0 ? "misma raiz (determinismo)" : "DIFERENTE") << "\n";
 
-    // ALTERACION: alguien toca un dato
+    // 3) alteracion de UN dato
     h[3] = 99;
     llenar_bloques(h, bloques);
     m.Build(bloques);
-    cout << "tras alterar h[3] = 99, raiz: " << hex << m.Root() << dec << "\n";
-    cout << "integridad: " << (m.Root() != r0 ? "VIOLADA (un dato cambio la raiz)" : "ok") << "\n";
+    PrintColored(cout, "3) Se altera h[3]: 22 -> 99", Color::Red);
+    cout << "   bloque cambiado: (3,22) -> (3,99)\n";
+    cout << "   bloques: ";
+    for (const auto& b : bloques)
+        cout << b.getValue() << " ";
+    cout << "\n   raiz: " << hex << m.Root() << dec << "\n";
+    cout << "   integridad: " << (m.Root() != r0 ? "VIOLADA (un solo dato cambio la raiz)" : "ok") << "\n";
 
-    // restauracion
+    // 4) restauracion
     h[3] = 22;
     llenar_bloques(h, bloques);
     m.Build(bloques);
-    cout << "dato restaurado, raiz " << (m.Root() == r0 ? "original de vuelta" : "DIFERENTE") << "\n";
+    PrintColored(cout, "4) Se restaura h[3]: 99 -> 22", Color::Green);
+    cout << "   raiz: " << hex << m.Root() << dec
+         << (m.Root() == r0 ? " (original de vuelta)" : " DIFERENTE") << "\n";
 }
