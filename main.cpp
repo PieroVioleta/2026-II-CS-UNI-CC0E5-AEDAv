@@ -14,5 +14,6 @@ int main() {
     DemoBinaryTree();
     DemoAVLTree();
     DemoHashTable();
+    DemoMerkleTree();
     return 0;
 }

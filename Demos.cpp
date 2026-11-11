@@ -14,6 +14,7 @@
 #include "containers/binarytree.h"
 #include "containers/AVLTree.h"
 #include "containers/HashTable.h"
+#include "containers/MerkleTree.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -456,4 +457,67 @@ void DemoHashTable() {
     ss2 << m2;
     cout << "Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << ":\n";
     cout << ss2.str() << "\n";
+}
+
+void DemoMerkleTree() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para MerkleTree (integridad)", Color::Yellow);
+
+    MerkleTree<MerkleAscTraits<TXX>> m;
+    cout << "raiz vacia: " << m.Root() << "\n";
+
+    // bloques de datos
+    Vector<VectorAscTraits<string>> blocks;
+    blocks.push_back("54", 0);
+    blocks.push_back("7", 1);
+    blocks.push_back("33", 2);
+    blocks.push_back("48", 3);
+    blocks.push_back("85", 4);
+
+    m.Build(blocks);
+    cout << "Bloques:";
+    for (const auto& b : blocks)
+        cout << " " << b.getValue();
+    cout << "\n";
+    m.PrintTree();
+    cout << "raiz: " << hex << m.Root() << dec << "\n";
+
+    // Integridad: los datos vienen del HashTable
+    HashTable<HashAscTraits<TX>> h;
+    h[5] = 54;
+    h[3] = 22;
+    h[8] = 7;
+    h[1] = 48;
+
+    // los bloques = las entradas del hash en orden (inorden = orden por clave)
+    Vector<VectorAscTraits<string>> bloques;
+    auto llenar_bloques = [](HashTable<HashAscTraits<TX>>& t, Vector<VectorAscTraits<string>>& b) {
+        b.clear();
+        for (auto it = t.begin(); it != t.end(); ++it)
+            b.push_back("(" + to_string((*it).getValue()) + "," + to_string((*it).getRef()) + ")", b.size());
+    };
+
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    TXX r0 = m.Root();
+    cout << "\nraiz del hash: " << hex << r0 << dec << "\n";
+    m.PrintTree();
+
+    // mismos datos -> misma raiz (determinismo)
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    cout << "rebuild sin cambios: " << (m.Root() == r0 ? "misma raiz" : "DIFERENTE") << "\n";
+
+    // ALTERACION: alguien toca un dato
+    h[3] = 99;
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    cout << "tras alterar h[3] = 99, raiz: " << hex << m.Root() << dec << "\n";
+    cout << "integridad: " << (m.Root() != r0 ? "VIOLADA (un dato cambio la raiz)" : "ok") << "\n";
+
+    // restauracion
+    h[3] = 22;
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    cout << "dato restaurado, raiz " << (m.Root() == r0 ? "original de vuelta" : "DIFERENTE") << "\n";
 }
