@@ -10,5 +10,7 @@ void DemoLinkedList();
 void DemoHeap();
 void DemoBinaryTree();
 void DemoAVLTree();
+void DemoHashTable();
+void DemoMerkleTree();
 
 #endif // __DEMOS_H__

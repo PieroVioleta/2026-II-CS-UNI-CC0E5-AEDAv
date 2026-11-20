@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream> // ofstream para escribir en archivo
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -12,6 +13,8 @@
 #include "containers/Heap.h"
 #include "containers/binarytree.h"
 #include "containers/AVLTree.h"
+#include "containers/HashTable.h"
+#include "containers/MerkleTree.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -416,4 +419,143 @@ void DemoAVLTree() {
 
     AVLTree<AVLTreeAscTraits<TX>> tree;
     TestBinaryTree(tree, "avltree.txt");
+}
+
+void DemoHashTable() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para HashTable (1 AVL interno)", Color::Yellow);
+
+    HashTable<HashAscTraits<TX>> m;
+    cout << "m[5] = 54:\n";
+    m[5] = 54;
+    m.PrintTree();
+
+    cout << "Altas encadenadas:\n";
+    for (TX v : {3, 8, 1, 10, 2, 6}) {
+        Ref val = (v * 37 + 11) % 100;
+        m[v] = val;
+        cout << "m[" << v << "] = " << val << ":\n";
+        m.PrintTree();
+    }
+
+    // Lectura de key inexistente
+    cout << "m[20] = " << m[20] << " (alta automatica):\n";
+    m.PrintTree();
+
+    // Persistencia: operator<< escribe el avl (inorden), operator>> lo lee
+    cout << "operator<< escribe el avl:\n";
+    stringstream ss;
+    ss << m;
+    cout << ss.str() << "\n";
+
+    // Round-trip: leer en otro hash y volver a escribir
+    HashTable<HashAscTraits<TX>> m2;
+    ss >> m2;
+    cout << "operator>> lee el avl:\n";
+    m2.PrintTree();
+    stringstream ss2;
+    ss2 << m2;
+    cout << "Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << ":\n";
+    cout << ss2.str() << "\n";
+
+    // El mismo hash con valores string (M = std::string)
+    HashTable<HashAscTraits<TX, string>> saludos;
+    cout << "saludos[5] = \"hola\":\n";
+    saludos[5] = "hola";
+    saludos.PrintTree();
+
+    cout << "saludos[3] = \"mundo\":\n";
+    saludos[3] = "mundo";
+    saludos.PrintTree();
+
+    // Persistencia del hash de strings
+    stringstream st;
+    st << saludos;
+    HashTable<HashAscTraits<TX, string>> copia;
+    st >> copia;
+    stringstream st2;
+    st2 << copia;
+    cout << "Round-trip string " << (st.str() == st2.str() ? "identico" : "DIFERENTE") << ": "
+         << st2.str() << "\n";
+
+    // alta automatica con valor vacio (va al final: el formato (k,v) no serializa vacios)
+    cout << "saludos[7] = \"" << saludos[7] << "\" (alta automatica)\n";
+    saludos.PrintTree();
+}
+
+void DemoMerkleTree() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para MerkleTree (integridad)", Color::Yellow);
+
+    MerkleTree<MerkleAscTraits<TXX>> m;
+    cout << "raiz vacia: " << m.Root() << "\n";
+
+    // bloques de datos
+    Vector<VectorAscTraits<string>> blocks;
+    blocks.push_back("54", 0);
+    blocks.push_back("7", 1);
+    blocks.push_back("33", 2);
+    blocks.push_back("48", 3);
+    blocks.push_back("85", 4);
+
+    m.Build(blocks);
+    cout << "Bloques:";
+    for (const auto& b : blocks)
+        cout << " " << b.getValue();
+    cout << "\n";
+    m.PrintTree();
+    cout << "raiz: " << hex << m.Root() << dec << "\n";
+
+    // Integridad: los datos viven en el HashTable, la raiz es su huella
+    HashTable<HashAscTraits<TX>> h;
+    h[5] = 54;
+    h[3] = 22;
+    h[8] = 7;
+    h[1] = 48;
+
+    // los bloques = las entradas del hash en orden (inorden = orden por clave)
+    Vector<VectorAscTraits<string>> bloques;
+    auto llenar_bloques = [](HashTable<HashAscTraits<TX>>& t, Vector<VectorAscTraits<string>>& b) {
+        b.clear();
+        for (auto it = t.begin(); it != t.end(); ++it)
+            b.push_back("(" + to_string((*it).getValue().first) + "," + to_string((*it).getValue().second) + ")", b.size());
+    };
+
+    // 1) dataset original
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    TXX r0 = m.Root();
+    PrintColored(cout, "1) Dataset original", Color::Green);
+    cout << "   datos: h[5]=54  h[3]=22  h[8]=7  h[1]=48\n";
+    cout << "   bloques: ";
+    for (const auto& b : bloques)
+        cout << b.getValue() << " ";
+    cout << "\n   raiz: " << hex << r0 << dec << "\n";
+    m.PrintTree();
+
+    // 2) determinismo: mismos datos, misma raiz
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    cout << "2) Reconstruir sin cambiar nada: "
+         << (m.Root() == r0 ? "misma raiz (determinismo)" : "DIFERENTE") << "\n";
+
+    // 3) alteracion de UN dato
+    h[3] = 99;
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    PrintColored(cout, "3) Se altera h[3]: 22 -> 99", Color::Red);
+    cout << "   bloque cambiado: (3,22) -> (3,99)\n";
+    cout << "   bloques: ";
+    for (const auto& b : bloques)
+        cout << b.getValue() << " ";
+    cout << "\n   raiz: " << hex << m.Root() << dec << "\n";
+    cout << "   integridad: " << (m.Root() != r0 ? "VIOLADA (un solo dato cambio la raiz)" : "ok") << "\n";
+
+    // 4) restauracion
+    h[3] = 22;
+    llenar_bloques(h, bloques);
+    m.Build(bloques);
+    PrintColored(cout, "4) Se restaura h[3]: 99 -> 22", Color::Green);
+    cout << "   raiz: " << hex << m.Root() << dec
+         << (m.Root() == r0 ? " (original de vuelta)" : " DIFERENTE") << "\n";
 }
