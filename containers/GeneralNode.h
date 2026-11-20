@@ -15,7 +15,6 @@ public:
     T    getValue() const { return m_value; }
     Ref  getRef()   const { return m_ref;   }
     T&   value()          { return m_value; } // acceso mutable para ApplyFunction
-    Ref& ref()            { return m_ref;   } // acceso mutable para HashTable
 
     using Delim = std::istream::char_type;
 

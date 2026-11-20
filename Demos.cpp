@@ -457,6 +457,30 @@ void DemoHashTable() {
     ss2 << m2;
     cout << "Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << ":\n";
     cout << ss2.str() << "\n";
+
+    // El mismo hash con valores string (M = std::string)
+    HashTable<HashAscTraits<TX, string>> saludos;
+    cout << "saludos[5] = \"hola\":\n";
+    saludos[5] = "hola";
+    saludos.PrintTree();
+
+    cout << "saludos[3] = \"mundo\":\n";
+    saludos[3] = "mundo";
+    saludos.PrintTree();
+
+    // Persistencia del hash de strings
+    stringstream st;
+    st << saludos;
+    HashTable<HashAscTraits<TX, string>> copia;
+    st >> copia;
+    stringstream st2;
+    st2 << copia;
+    cout << "Round-trip string " << (st.str() == st2.str() ? "identico" : "DIFERENTE") << ": "
+         << st2.str() << "\n";
+
+    // alta automatica con valor vacio (va al final: el formato (k,v) no serializa vacios)
+    cout << "saludos[7] = \"" << saludos[7] << "\" (alta automatica)\n";
+    saludos.PrintTree();
 }
 
 void DemoMerkleTree() {
@@ -494,7 +518,7 @@ void DemoMerkleTree() {
     auto llenar_bloques = [](HashTable<HashAscTraits<TX>>& t, Vector<VectorAscTraits<string>>& b) {
         b.clear();
         for (auto it = t.begin(); it != t.end(); ++it)
-            b.push_back("(" + to_string((*it).getValue()) + "," + to_string((*it).getRef()) + ")", b.size());
+            b.push_back("(" + to_string((*it).getValue().first) + "," + to_string((*it).getValue().second) + ")", b.size());
     };
 
     // 1) dataset original
