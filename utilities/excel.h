@@ -19,17 +19,57 @@ public:
 
     Ref Get(const std::string& nombre) { return m_valores[nombre]; }
 
+    // acepta "A2 5", "A2=5", "A2 = 5", "a2 5"; false si la linea no es valida
+    bool SetLinea(const std::string& linea) {
+        std::string texto = Mayusculas(linea);
+        std::string nombre, contenido;
+        size_t eq = texto.find('=');
+        if (eq != std::string::npos && eq > 0 && texto[eq - 1] != ' ') {
+            nombre    = texto.substr(0, eq);        // "A2=1": el = es el separador
+            contenido = texto.substr(eq + 1);
+        } else if (eq != std::string::npos) {
+            nombre    = texto.substr(0, eq);        // "B1 =A2*3": el = pertenece a la formula
+            contenido = texto.substr(eq);
+        } else {
+            size_t sep = texto.find(' ');
+            if (sep == std::string::npos)
+                return false;
+            nombre    = texto.substr(0, sep);
+            contenido = texto.substr(sep + 1);
+        }
+        nombre    = Limpiar(nombre);
+        contenido = Limpiar(contenido);
+        if (!EsCelda(nombre))
+            return false;
+        Set(nombre, contenido);
+        return true;
+    }
+
+    static std::string Mayusculas(std::string s) {
+        for (auto& c : s)
+            if (c >= 'a' && c <= 'z')
+                c = c - 'a' + 'A';
+        return s;
+    }
+
+    static std::string Limpiar(const std::string& s) {
+        size_t a = s.find_first_not_of(' ');
+        if (a == std::string::npos)
+            return "";
+        size_t b = s.find_last_not_of(' ');
+        return s.substr(a, b - a + 1);
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Excel& e) {
-        os << e.m_contenido;
+        for (auto it = e.m_contenido.begin(); it != e.m_contenido.end(); ++it)
+            os << (*it).getValue().first << "=" << (*it).getValue().second << "\n";
         return os;
     }
 
     friend std::istream& operator>>(std::istream& is, Excel& e) {
-        is >> e.m_contenido;
-        for (auto it = e.m_contenido.begin(); it != e.m_contenido.end(); ++it)
-            e.RegistrarReferencias((*it).getValue().second, (*it).getValue().first);
-        for (auto it = e.m_contenido.begin(); it != e.m_contenido.end(); ++it)
-            e.Recalcular((*it).getValue().first, 0);
+        std::string linea;
+        while (std::getline(is, linea))
+            e.SetLinea(linea);
         return is;
     }
 
@@ -90,6 +130,15 @@ private:
         }
     }
 
+    static bool EsCelda(const std::string& s) {
+        size_t i = 0;
+        while (i < s.size() && s[i] >= 'A' && s[i] <= 'Z') ++i;
+        if (i == 0 || i == s.size())
+            return false;
+        while (i < s.size() && s[i] >= '0' && s[i] <= '9') ++i;
+        return i == s.size();
+    }
+
     void Recalcular(const std::string& nombre, TX depth) {
         if (depth > 100) return;
         Evaluar(nombre);
@@ -107,9 +156,15 @@ private:
             m_valores[nombre] = ANumero(f);
     }
 
+    static void Saltar(const std::string& f, size_t& pos) {
+        while (pos < f.size() && f[pos] == ' ')
+            ++pos;
+    }
+
     Ref EvalExpr(const std::string& f, size_t& pos) {
+        Saltar(f, pos);
         Ref v = EvalTermino(f, pos);
-        while (pos < f.size() && (f[pos] == '+' || f[pos] == '-')) {
+        for (Saltar(f, pos); pos < f.size() && (f[pos] == '+' || f[pos] == '-'); Saltar(f, pos)) {
             auto op = f[pos++];
             Ref r = EvalTermino(f, pos);
             if (op == '+') v += r;
@@ -120,7 +175,7 @@ private:
 
     Ref EvalTermino(const std::string& f, size_t& pos) {
         Ref v = EvalFactor(f, pos);
-        while (pos < f.size() && (f[pos] == '*' || f[pos] == '/')) {
+        for (Saltar(f, pos); pos < f.size() && (f[pos] == '*' || f[pos] == '/'); Saltar(f, pos)) {
             auto op = f[pos++];
             Ref r = EvalFactor(f, pos);
             if (op == '*') v *= r;
@@ -131,10 +186,12 @@ private:
     }
 
     Ref EvalFactor(const std::string& f, size_t& pos) {
+        Saltar(f, pos);
         if (pos >= f.size()) return 0;
         if (f[pos] == '(') {
             ++pos;
             Ref v = EvalExpr(f, pos);
+            Saltar(f, pos);
             if (pos < f.size() && f[pos] == ')') ++pos;
             return v;
         }
@@ -162,13 +219,14 @@ private:
         ++pos;
         Ref sum = 0, cuenta = 0, mx = 0, mn = 0;
         bool primero = true;
-        while (pos < f.size() && f[pos] != ')') {
+        for (Saltar(f, pos); pos < f.size() && f[pos] != ')'; Saltar(f, pos)) {
             Ref v = EvalExpr(f, pos);
             sum += v;
             ++cuenta;
             if (primero || v > mx) mx = v;
             if (primero || v < mn) mn = v;
             primero = false;
+            Saltar(f, pos);
             if (pos < f.size() && f[pos] == ',') ++pos;
         }
         if (pos < f.size()) ++pos;

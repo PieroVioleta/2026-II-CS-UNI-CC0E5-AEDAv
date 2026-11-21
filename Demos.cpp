@@ -576,7 +576,7 @@ void DemoExcel() {
     for (auto it = excel.Contenido().begin(); it != excel.Contenido().end(); ++it)
         cout << "   " << (*it).getValue().first << ": " << (*it).getValue().second << "\n";
     cout << "   Valores (cuadricula + AVL ordenado por nombre):\n";
-    excel.ImprimirCuadricula(cout, 2, "ABC");
+    excel.ImprimirCuadricula(cout, 2, "ABCD");
     excel.PrintTree();
 
     PrintColored(cout, "2) Referencias (lista enlazada)", Color::Green);
@@ -585,13 +585,21 @@ void DemoExcel() {
 
     PrintColored(cout, "3) Se cambia A1: 5 -> 10 (recalculo en cascada)", Color::Red);
     excel.Set("A1", "10");
-    excel.ImprimirCuadricula(cout, 2, "ABC");
+    excel.ImprimirCuadricula(cout, 2, "ABCD");
 
-    PrintColored(cout, "4) Modifica celdas: \"celda valor\" (ej: A2 9 / B1 =A2*3 / fin)", Color::Red);
-    std::string nombre, contenido;
-    while (cin >> nombre && nombre != "fin" && (cin >> contenido)) {
-        excel.Set(nombre, contenido);
-        excel.ImprimirCuadricula(cout, 2, "ABC");
+    PrintColored(cout, "4) Modifica celdas: escribe \"celda valor\" (fin para terminar)", Color::Red);
+    cout << "   operaciones: + - * / y parentesis ( )\n";
+    cout << "   funciones:   SUM(...) AVG(...) MAX(...) MIN(...)\n";
+    cout << "   ejemplos:    A2 5  |  A2=5  |  B1 =A2*3  |  C1 =(A1+A2)/2\n";
+    std::string linea;
+    while (std::getline(cin, linea)) {
+        if (Excel::Limpiar(Excel::Mayusculas(linea)) == "FIN")
+            break;
+        if (!excel.SetLinea(linea)) {
+            cout << "   entrada no valida (ej: A2 5 / B1 =A2*3)\n";
+            continue;
+        }
+        excel.ImprimirCuadricula(cout, 2, "ABCD");
     }
 
     PrintColored(cout, "5) Persistencia: guardar y cargar en otro Excel", Color::Green);
