@@ -2,6 +2,7 @@
 #define __EXCEL_H__
 #include "../containers/HashTable.h"
 #include "../containers/linkedlist.h"
+#include <iomanip>
 
 // Excel de texto: celdas "A1" con contenido "5" o "=SUM(A1,B2)*2"
 class Excel {
@@ -37,6 +38,31 @@ public:
     const Celdas& Contenido() const { return m_contenido; }
 
     const ListaReferencias& Referencias() const { return m_referencias; }
+
+    void ImprimirCuadricula(std::ostream& os, TX filas, const std::string& letras) const {
+        std::string techo = "      ┌", medio = "      ├", piso = "      └";
+        for (size_t i = 0; i < letras.size(); ++i) {
+            techo += "────────" + std::string(i + 1 == letras.size() ? "┐" : "┬");
+            medio  += "────────" + std::string(i + 1 == letras.size() ? "┤" : "┼");
+            piso   += "────────" + std::string(i + 1 == letras.size() ? "┘" : "┴");
+        }
+        os << techo << "\n      │";
+        for (auto c : letras)
+            os << "   " << c << "    │";
+        os << "\n";
+        for (TX f = 1; f <= filas; ++f) {
+            os << medio << "\n  " << f << "  │";
+            for (auto c : letras) {
+                auto n = m_valores.Buscar(std::string(1, c) + std::to_string(f));
+                if (n)
+                    os << " " << std::setw(6) << n->getValue().second << " │";
+                else
+                    os << "        │";
+            }
+            os << "\n";
+        }
+        os << piso << "\n";
+    }
 
 private:
     Celdas m_contenido;

@@ -575,7 +575,8 @@ void DemoExcel() {
     PrintColored(cout, "1) Celdas y formulas", Color::Green);
     for (auto it = excel.Contenido().begin(); it != excel.Contenido().end(); ++it)
         cout << "   " << (*it).getValue().first << ": " << (*it).getValue().second << "\n";
-    cout << "   Valores (AVL ordenado por nombre):\n";
+    cout << "   Valores (cuadricula + AVL ordenado por nombre):\n";
+    excel.ImprimirCuadricula(cout, 2, "ABC");
     excel.PrintTree();
 
     PrintColored(cout, "2) Referencias (lista enlazada)", Color::Green);
@@ -584,11 +585,16 @@ void DemoExcel() {
 
     PrintColored(cout, "3) Se cambia A1: 5 -> 10 (recalculo en cascada)", Color::Red);
     excel.Set("A1", "10");
-    cout << "   B1 = " << excel.Get("B1") << "\n";
-    cout << "   B2 = " << excel.Get("B2") << "\n";
-    cout << "   C1 = " << excel.Get("C1") << "\n";
+    excel.ImprimirCuadricula(cout, 2, "ABC");
 
-    PrintColored(cout, "4) Persistencia: guardar y cargar en otro Excel", Color::Green);
+    PrintColored(cout, "4) Modifica celdas: \"celda valor\" (ej: A2 9 / B1 =A2*3 / fin)", Color::Red);
+    std::string nombre, contenido;
+    while (cin >> nombre && nombre != "fin" && (cin >> contenido)) {
+        excel.Set(nombre, contenido);
+        excel.ImprimirCuadricula(cout, 2, "ABC");
+    }
+
+    PrintColored(cout, "5) Persistencia: guardar y cargar en otro Excel", Color::Green);
     stringstream ss, ss2;
     ss << excel;
     Excel copia;

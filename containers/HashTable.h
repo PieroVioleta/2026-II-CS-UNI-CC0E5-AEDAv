@@ -62,6 +62,8 @@ public:
         return n->value().second;
     }
 
+    NodePtr Buscar(const Key& key) const { return find_key(this->m_root, key); }
+
     friend std::ostream& operator<<(std::ostream& os, const HashTable& h) {
         for (auto it = h.begin(); it != h.end(); ++it)
             os << (*it).getValue().first << " " << (*it).getValue().second << " ";
