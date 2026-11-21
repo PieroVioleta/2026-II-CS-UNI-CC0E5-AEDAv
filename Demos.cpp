@@ -591,10 +591,22 @@ void DemoExcel() {
     cout << "   operaciones: + - * / y parentesis ( )\n";
     cout << "   funciones:   SUM(...) AVG(...) MAX(...) MIN(...)\n";
     cout << "   ejemplos:    A2 5  |  A2=5  |  B1 =A2*3  |  C1 =(A1+A2)/2\n";
+    cout << "   comandos:    cargar (lee excel.txt)  |  fin\n";
     std::string linea;
     while (std::getline(cin, linea)) {
-        if (Excel::Limpiar(Excel::Mayusculas(linea)) == "FIN")
+        std::string comando = Excel::Limpiar(Excel::Mayusculas(linea));
+        if (comando == "FIN")
             break;
+        if (comando == "CARGAR") {
+            std::ifstream carga("excel.txt");
+            if (!carga) {
+                cout << "   no hay excel.txt todavia\n";
+                continue;
+            }
+            carga >> excel;
+            excel.ImprimirCuadricula(cout, 2, "ABCD");
+            continue;
+        }
         if (!excel.SetLinea(linea)) {
             cout << "   entrada no valida (ej: A2 5 / B1 =A2*3)\n";
             continue;
@@ -602,13 +614,24 @@ void DemoExcel() {
         excel.ImprimirCuadricula(cout, 2, "ABCD");
     }
 
-    PrintColored(cout, "5) Persistencia: guardar y cargar en otro Excel", Color::Green);
-    stringstream ss, ss2;
+    PrintColored(cout, "5) Persistencia: guardar y cargar en excel.txt", Color::Green);
+    stringstream ss;
     ss << excel;
+    std::ofstream archivo("excel.txt");
+    archivo << excel;
+    archivo.close();
+
+    cout << "   contenido de excel.txt:\n";
+    std::ifstream ver("excel.txt");
+    for (std::string linea; std::getline(ver, linea); )
+        cout << "      " << linea << "\n";
+
     Excel copia;
-    ss >> copia;
+    std::ifstream carga("excel.txt");
+    carga >> copia;
+
+    stringstream ss2;
     ss2 << copia;
     cout << "   Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << "\n";
-    cout << "   serializado: " << ss2.str() << "\n";
     cout << "   B1 en la copia = " << copia.Get("B1") << "\n";
 }
