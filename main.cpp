@@ -15,5 +15,6 @@ int main() {
     DemoAVLTree();
     DemoHashTable();
     DemoMerkleTree();
+    DemoExcel();
     return 0;
 }

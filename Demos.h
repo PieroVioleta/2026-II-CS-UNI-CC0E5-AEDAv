@@ -12,5 +12,6 @@ void DemoBinaryTree();
 void DemoAVLTree();
 void DemoHashTable();
 void DemoMerkleTree();
+void DemoExcel();
 
 #endif // __DEMOS_H__

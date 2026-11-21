@@ -15,6 +15,7 @@
 #include "containers/AVLTree.h"
 #include "containers/HashTable.h"
 #include "containers/MerkleTree.h"
+#include "utilities/excel.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -558,4 +559,42 @@ void DemoMerkleTree() {
     PrintColored(cout, "4) Se restaura h[3]: 99 -> 22", Color::Green);
     cout << "   raiz: " << hex << m.Root() << dec
          << (m.Root() == r0 ? " (original de vuelta)" : " DIFERENTE") << "\n";
+}
+
+void DemoExcel() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para Excel de texto", Color::Yellow);
+
+    Excel excel;
+    excel.Set("A1", "5");
+    excel.Set("A2", "7");
+    excel.Set("B1", "=A1+A2");
+    excel.Set("B2", "=SUM(A1,A2,B1)*2");
+    excel.Set("C1", "=MAX(B1,B2)/2");
+
+    PrintColored(cout, "1) Celdas y formulas", Color::Green);
+    for (auto it = excel.Contenido().begin(); it != excel.Contenido().end(); ++it)
+        cout << "   " << (*it).getValue().first << ": " << (*it).getValue().second << "\n";
+    cout << "   Valores (AVL ordenado por nombre):\n";
+    excel.PrintTree();
+
+    PrintColored(cout, "2) Referencias (lista enlazada)", Color::Green);
+    for (auto it = excel.Referencias().begin(); it != excel.Referencias().end(); ++it)
+        cout << "   " << (*it).getValue().first << " <- " << (*it).getValue().second << "\n";
+
+    PrintColored(cout, "3) Se cambia A1: 5 -> 10 (recalculo en cascada)", Color::Red);
+    excel.Set("A1", "10");
+    cout << "   B1 = " << excel.Get("B1") << "\n";
+    cout << "   B2 = " << excel.Get("B2") << "\n";
+    cout << "   C1 = " << excel.Get("C1") << "\n";
+
+    PrintColored(cout, "4) Persistencia: guardar y cargar en otro Excel", Color::Green);
+    stringstream ss, ss2;
+    ss << excel;
+    Excel copia;
+    ss >> copia;
+    ss2 << copia;
+    cout << "   Round-trip " << (ss.str() == ss2.str() ? "identico" : "DIFERENTE") << "\n";
+    cout << "   serializado: " << ss2.str() << "\n";
+    cout << "   B1 en la copia = " << copia.Get("B1") << "\n";
 }
